@@ -343,8 +343,7 @@
     "name": "getCycleInfo",
     "outputs": [
       { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "address[]", "name": "", "type": "address[]" },
-      { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
+      { "internalType": "address[]", "name": "", "type": "address[]" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -473,12 +472,7 @@
     "outputs": [
       { "internalType": "uint256", "name": "id", "type": "uint256" },
       { "internalType": "address", "name": "referrer", "type": "address" },
-      { "internalType": "uint256", "name": "partnersCount", "type": "uint256" },
-      {
-        "internalType": "uint256",
-        "name": "registrationTime",
-        "type": "uint256"
-      }
+      { "internalType": "uint256", "name": "partnersCount", "type": "uint256" }
     ],
     "stateMutability": "view",
     "type": "function"

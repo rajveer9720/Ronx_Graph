@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
 
 // Define the ABI and contract address
-const CONTRACT_ADDRESS = "0x04BBddcFc9321458c3403C64Cb5B2EC06b619679";
+const CONTRACT_ADDRESS = "0xdB035d95F1C347D179C1f1DAA305011770880630";
 
 // Define types for the context
 interface SmartContractContextType {
@@ -14,6 +14,8 @@ interface SmartContractContextType {
   writeData: (methodName: string, ...params: any[]) => Promise<any | null>;
   usersActiveX3Levels: (userAddress: string, level: number) => Promise<boolean | null>;
   usersActiveX4Levels: (userAddress: string, level: number) => Promise<boolean | null>; // New method for x4
+  getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
+
   provider: ethers.providers.Web3Provider | null;
 }
 
@@ -92,9 +94,19 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
       return null;
     }
   };
+  const getTotalCycles = async (userAddress: string, matrix: number, level: number) => {
+    if (!contract) return null;
+    try {
+      const cycles = await contract.getTotalCycles(userAddress, matrix, level);
+      return cycles.toNumber(); // Convert from BigNumber
+    } catch (error) {
+      console.error("Error fetching total cycles:", error);
+      return null;
+    }
+  };
 
   return (
-    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, provider }}>
+    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels,getTotalCycles, provider }}>
       {children}
     </SmartContractContext.Provider>
   );

@@ -1,6 +1,7 @@
-'use client'; // Add this line to ensure the component is rendered on the client side
+'use client'; // Ensure client-side rendering
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
 import LevelHeader from '@/components/levelheader/levelheader';
 import TransactionTable from '@/components/transaction/transaction-table'; 
 import NotifyBot from '@/components/notifybot/notifybot';
@@ -21,7 +22,9 @@ const levels = [
 ];
 
 const LevelSlider: React.FC = () => {
-  const [currentLevel, setCurrentLevel] = useState(1);
+  const searchParams = useSearchParams(); // Get search parameters from URL
+  const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
+  const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
 
   const nextLevel = () => {
     if (currentLevel < 12) {
@@ -39,8 +42,8 @@ const LevelSlider: React.FC = () => {
 
   return (
     <>
-      <LevelHeader level={1} uplineId="123456" />
-      <div className="flex items-center justify-cen000ter text-white p-4 mx-auto max-w-screen-lg">
+      <LevelHeader level={currentLevel} uplineId={123456} />
+      <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
           className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${
@@ -50,38 +53,37 @@ const LevelSlider: React.FC = () => {
         >
           {currentLevel > 1 ? currentLevel - 1 : ''}
         </button>
-        <div className="flex-grow mx-4 " >
+        <div className="flex-grow mx-4">
           {levelData && (
-            <div className="bg-blue-700  rounded-lg text-center border border-gray-600 relative ">
-              <div className='p-9'>
-              <div className="flex justify-between items-center mb-6">
-                <div className="text-xl font-bold">Lvl {levelData.level}</div>
-                <div className="text-xl font-bold">ID {levelData.Id}</div>
-                <div className="text-lg">{levelData.cost} BUSD</div>
-              </div>
-              <div className="flex justify-center items-center mb-6 gap-4">
-  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-white text-black font-bold rounded-full flex items-center justify-center">
-    17713
-  </div>
-  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-blue-400 rounded-full flex items-center justify-center">
-  10235
-  </div>
-  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-blue-400 rounded-full flex items-center justify-center">
-  3625
-  </div>
-</div>
-
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center">
-                  <span className="mr-2">👥</span> {levelData.partners}
+            <div className="bg-blue-700 rounded-lg text-center border border-gray-600 relative">
+              <div className="p-9">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="text-xl font-bold">Lvl {levelData.level}</div>
+                  <div className="text-xl font-bold">ID {levelData.Id}</div>
+                  <div className="text-lg">{levelData.cost} BUSD</div>
                 </div>
-                <div className="flex items-center">
-                  <span className="mr-2">🔄</span> {levelData.cycles}
+                <div className="flex justify-center items-center mb-6 gap-4">
+                  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-white text-black font-bold rounded-full flex items-center justify-center">
+                    17713
+                  </div>
+                  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-blue-400 rounded-full flex items-center justify-center">
+                    10235
+                  </div>
+                  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-blue-400 rounded-full flex items-center justify-center">
+                    3625
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-center items-center">
-                <span className="mr-2">💰</span> {levelData.revenue} BUSD
-              </div>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center">
+                    <span className="mr-2">👥</span> {levelData.partners}
+                  </div>
+                  <div className="flex items-center">
+                    <span className="mr-2">🔄</span> {levelData.cycles}
+                  </div>
+                </div>
+                <div className="flex justify-center items-center">
+                  <span className="mr-2">💰</span> {levelData.revenue} BUSD
+                </div>
               </div>
             </div>
           )}
@@ -96,9 +98,9 @@ const LevelSlider: React.FC = () => {
           {currentLevel < 12 ? currentLevel + 1 : ''}
         </button>
       </div>
-      <div className='my-9'>
-        <NotifyBot/>
-      <TransactionTable />
+      <div className="my-9">
+        <NotifyBot />
+        <TransactionTable />
       </div>
     </>
   );

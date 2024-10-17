@@ -14,27 +14,36 @@ const Program: React.FC = () => {
   const router = useRouter();
   const { usersActiveX3Levels, usersActiveX4Levels } = useSmartContract();
   const [activeProgram, setActiveProgram] = useState<string | null>(null);
-  const [activeLevelsX3, setActiveLevelsX3] = useState<boolean[]>(Array(12).fill(false)); // Default all levels to inactive for x3
-  const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false)); // Default all levels to inactive for x4
-  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Example user address
+  const [activeLevelsX3, setActiveLevelsX3] = useState<boolean[]>(Array(12).fill(false));
+  const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false));
+  const [loading, setLoading] = useState(true); // Loading state
+  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
 
   useEffect(() => {
     const fetchActiveLevels = async () => {
-      // Fetch active levels for x3
-      const levelsStatusX3 = await Promise.all(
-        Array.from({ length: 12 }, (_, index) => usersActiveX3Levels(userAddress, index + 1))
-      );
-      const booleanLevelsStatusX3 = levelsStatusX3.map(status => status === null ? false : status);
+      setLoading(true); // Start loading
+      try {
+        const levelsStatusX3 = await Promise.all(
+          Array.from({ length: 12 }, (_, index) => usersActiveX3Levels(userAddress, index + 1))
+        );
+        const booleanLevelsStatusX3 = levelsStatusX3.map(status => status === null ? false : status);
+        setActiveLevelsX3(booleanLevelsStatusX3); 
+        // Log the x3 active levels array
       console.log('Active Levels x3:', booleanLevelsStatusX3);
-      setActiveLevelsX3(booleanLevelsStatusX3);
 
-      // Fetch active levels for x4
-      const levelsStatusX4 = await Promise.all(
-        Array.from({ length: 12 }, (_, index) => usersActiveX4Levels(userAddress, index + 1))
-      );
-      const booleanLevelsStatusX4 = levelsStatusX4.map(status => status === null ? false : status);
+        const levelsStatusX4 = await Promise.all(
+          Array.from({ length: 12 }, (_, index) => usersActiveX4Levels(userAddress, index + 1))
+        );
+        const booleanLevelsStatusX4 = levelsStatusX4.map(status => status === null ? false : status);
+        setActiveLevelsX4(booleanLevelsStatusX4);
+              
+      // Log the x4 active levels array
       console.log('Active Levels x4:', booleanLevelsStatusX4);
-      setActiveLevelsX4(booleanLevelsStatusX4);
+      } catch (error) {
+        console.error('Error fetching active levels:', error);
+      } finally {
+        setLoading(false); // End loading
+      }
     };
 
     fetchActiveLevels();
@@ -43,10 +52,10 @@ const Program: React.FC = () => {
   const handleClick = (name: string) => {
     setActiveProgram(name);
     if (name !== 'x3') {
-      setActiveLevelsX3(Array(12).fill(false)); // Reset x3 levels when not x3
+      setActiveLevelsX3(Array(12).fill(false));
     }
     if (name !== 'x4') {
-      setActiveLevelsX4(Array(12).fill(false)); // Reset x4 levels when not x4
+      setActiveLevelsX4(Array(12).fill(false));
     }
   };
 
@@ -59,9 +68,9 @@ const Program: React.FC = () => {
       <div
         key={index + 1}
         className={`flex items-center justify-center h-12 mb-2 gap-2 rounded-md text-gray-700 border border-gray-300 dark:border-gray-600 ${isActive ? 'bg-blue-500' : 'bg-gray-300'}`}
-        onClick={() => handleClick(programName)} // Update the click handler to match the program name
+        onClick={() => handleClick(programName)}
       >
-        {index + 1} {/* Display level number */}
+        {index + 1}
       </div>
     ));
   };
@@ -77,7 +86,6 @@ const Program: React.FC = () => {
           backgroundPosition: 'center',
         }}
       >
-        {/* Program Header */}
         <div className="flex justify-between w-full z-10">
           <span className="text-white text-lg sm:text-xl font-bold">{program.name}</span>
           <span className="text-white text-lg sm:text-xl font-bold text-right">{program.perCycle}</span>
@@ -103,12 +111,16 @@ const Program: React.FC = () => {
     </div>
   );
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>; // Loading state
+  }
+
   return (
     <div className="flex flex-col mt-5 items-center rounded-lg bg-gray-100 dark:bg-gray-900 p-3 sm:p-5">
       <div className="container mx-auto p-3 bg-slate-600 rounded-lg dark:bg-gray-800">
         <div className="flex flex-col sm:flex-row gap-8">
-          {renderProgram(programs[0], activeLevelsX3)} {/* Render x3 program */}
-          {renderProgram(programs[1], activeLevelsX4)} {/* Render x4 program */}
+          {renderProgram(programs[0], activeLevelsX3)}
+          {renderProgram(programs[1], activeLevelsX4)}
         </div>
       </div>
     </div>

@@ -1,23 +1,20 @@
-// src/components/ForsageGrid.tsx
-'use client';  // Add this line to ensure the component is rendered on the client side
-import { useRouter } from 'next/navigation'; // Add this import
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 import NotifyBot from '@/components/notifybot/notifybot';
-
-
-
 
 interface LevelCardProps {
   level: number;
   cost: number;
   partners: number;
-  cycles: number;
+  cycles: number | null; // Allow cycles to be null initially
 }
 
 const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles }) => {
-  const router = useRouter(); // Add this line
+  const router = useRouter();
 
   const handleClick = () => {
-    // Use router.push() instead of window.location.href
     router.push(`/retro/levelslider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
   };
 
@@ -40,10 +37,9 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles }) 
           <span className="mr-2">👥</span> {partners}
         </div>
         <div className="flex items-center">
-          <span className="mr-2">🔄</span> {cycles}
+          <span className="mr-2">🔄</span> {cycles !== null ? cycles : "Loading..."}
         </div>
       </div>
-      
     </div>
   );
 };
@@ -64,19 +60,45 @@ const levelData = [
 ];
 
 const RonxGrid: React.FC = () => {
+  const { getTotalCycles } = useSmartContract(); // Use getTotalCycles method
+  const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelData.length).fill(null));
+  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // User address
+  const matrix = 1; // Matrix value
+
+  useEffect(() => {
+    const fetchCyclesData = async () => {
+      const updatedCycles = await Promise.all(
+        levelData.map(async (data) => {
+          const cycles = await getTotalCycles(userAddress, matrix, data.level);
+          console.log(`Level ${data.level} cycles:`, cycles); // Log cycles for each level
+
+          return cycles;
+        })
+      );
+      setCyclesData(updatedCycles);
+    };
+
+    fetchCyclesData();
+  }, [getTotalCycles]);
+
   return (
-    <div className="p-5  min-h-screen text-white">
+    <div className="p-5 min-h-screen text-white">
       <div className="container mx-auto">
         <h1 className="text-3xl font-bold mb-5">Forsage x3</h1>
-        <h2 className="text-2xl mb-5">372 490 BUSD</h2>
+        {/* <h2 className="text-2xl mb-5">372 490 BUSD</h2> */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
-          {levelData.map((data) => (
-            <LevelCard key={data.level} {...data} />
+          {levelData.map((data, index) => (
+            <LevelCard
+              key={data.level}
+              level={data.level}
+              cost={data.cost}
+              partners={data.partners}
+              cycles={cyclesData[index]} // Pass fetched cycles to the card
+            />
           ))}
-        
         </div>
       </div>
-      <NotifyBot/>
+      <NotifyBot />
     </div>
   );
 };
