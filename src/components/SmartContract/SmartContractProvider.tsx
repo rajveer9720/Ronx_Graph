@@ -1,52 +1,44 @@
-// components/SmartContractProvider.tsx
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
 
-// Define the ABI and contract address
 const CONTRACT_ADDRESS = "0xdB035d95F1C347D179C1f1DAA305011770880630";
+const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; // Replace with your Infura Project ID
 
-// Define types for the context
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;
   writeData: (methodName: string, ...params: any[]) => Promise<any | null>;
   usersActiveX3Levels: (userAddress: string, level: number) => Promise<boolean | null>;
-  usersActiveX4Levels: (userAddress: string, level: number) => Promise<boolean | null>; // New method for x4
+  usersActiveX4Levels: (userAddress: string, level: number) => Promise<boolean | null>;
+  userX3Matrix: (userAddress: string, level: number) => Promise<number | null>;
+  userX4Matrix: (userAddress: string, level: number) => Promise<number | null>;
+  
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
-
-  provider: ethers.providers.Web3Provider | null;
+  provider: ethers.providers.JsonRpcProvider | null;
 }
 
-// Create the context
 const SmartContractContext = createContext<SmartContractContextType | undefined>(undefined);
 
-// SmartContractProvider component to provide the context to the rest of the app
 export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
+  const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider | null>(null);
   const [contract, setContract] = useState<ethers.Contract | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-          setProvider(web3Provider);
-          const signer = web3Provider.getSigner();
-          const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
-          setContract(contractInstance);
-        } catch (error) {
-          console.error("Error initializing provider or contract:", error);
-        }
-      } else {
-        console.warn("Ethereum object not found. Please install MetaMask.");
+      try {
+        const infuraProvider = new ethers.providers.JsonRpcProvider(`https://bsc-testnet.infura.io/v3/${INFURA_PROJECT_ID}`);
+        setProvider(infuraProvider);
+        const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, abi, infuraProvider);
+        setContract(contractInstance);
+      } catch (error) {
+        console.error("Error initializing provider or contract:", error);
       }
     };
     init();
   }, []);
 
-  // Fetch data from the contract
   const fetchData = async (methodName: string, ...params: any[]) => {
     if (!contract) return null;
     try {
@@ -58,12 +50,13 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Write data to the contract
   const writeData = async (methodName: string, ...params: any[]) => {
     if (!contract) return null;
     try {
-      const tx = await contract[methodName](...params);
-      await tx.wait(); // Wait for the transaction to be mined
+      const signer = provider?.getSigner();
+      const contractWithSigner = contract.connect(signer);
+      const tx = await contractWithSigner[methodName](...params);
+      await tx.wait();
       return tx;
     } catch (error) {
       console.error(`Error writing data to ${methodName}:`, error);
@@ -71,7 +64,8 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Check if a user is active on a specific X3 level
+
+  //User check active level in x3
   const usersActiveX3Levels = async (userAddress: string, level: number) => {
     if (!contract) return null;
     try {
@@ -83,8 +77,9 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Check if a user is active on a specific X4 level
-  const usersActiveX4Levels = async (userAddress: string, level: number) => {
+
+  //User check active levels in x4
+  const usersActiveX4Levels = async (userAddress: string, level: number) => { 
     if (!contract) return null;
     try {
       const result = await contract.usersActiveX6Levels(userAddress, level);
@@ -94,11 +89,35 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
       return null;
     }
   };
+  //fetch contract in Active current cycle data x3
+  const userX3Matrix = async (userAddress: string, level: number) => {
+    if (!contract) return null;
+    try {
+      const result = await contract.userX3Matrix(userAddress, level);
+      return result.toNumber(); // Assuming this returns a number
+    } catch (error) {
+      console.error("Error fetching userX3Matrix:", error);
+      return null;
+    }
+  };
+  //fetch contract in active current cycle data x4
+  const userX4Matrix = async(userAddress: string, level:number) => {
+    if (!contract) return null;
+    try {
+      const result = await contract.userX4Matrix(userAddress, level);
+      return result.toNumber(); // Assuming this returns a number
+    } catch (error) {
+      console.error("Error fetching userX4Matrix:", error);
+      return null;
+    }
+  }
+
+  //fetch any user currect time in complete cycle in any matrix and any level 
   const getTotalCycles = async (userAddress: string, matrix: number, level: number) => {
     if (!contract) return null;
     try {
       const cycles = await contract.getTotalCycles(userAddress, matrix, level);
-      return cycles.toNumber(); // Convert from BigNumber
+      return cycles.toNumber();
     } catch (error) {
       console.error("Error fetching total cycles:", error);
       return null;
@@ -106,13 +125,12 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels,getTotalCycles, provider }}>
+    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, getTotalCycles, provider }}>
       {children}
     </SmartContractContext.Provider>
   );
 };
 
-// Hook to use the smart contract context
 export const useSmartContract = () => {
   const context = useContext(SmartContractContext);
   if (context === undefined) {
