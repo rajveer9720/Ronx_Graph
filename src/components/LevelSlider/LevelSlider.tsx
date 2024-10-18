@@ -5,26 +5,63 @@ import { useSearchParams } from 'next/navigation'; // Import useSearchParams to 
 import LevelHeader from '@/components/levelheader/levelheader';
 import TransactionTable from '@/components/transaction/transaction-table'; 
 import NotifyBot from '@/components/notifybot/notifybot';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 
 const levels = [
-  { level: 1, cost: 5, partners: 22737, cycles: 8946, revenue: 100340, Id: '1770552' },
-  { level: 2, cost: 10, partners: 2563, cycles: 1205, revenue: 50340, Id: '1770553' },
-  { level: 3, cost: 20, partners: 792, cycles: 421, revenue: 40340, Id: '1770554' },
-  { level: 4, cost: 40, partners: 345, cycles: 200, revenue: 30340, Id: '1770555' },
-  { level: 5, cost: 80, partners: 153, cycles: 91, revenue: 20340, Id: '1770556' },
-  { level: 6, cost: 160, partners: 76, cycles: 47, revenue: 10340, Id: '1770557' },
-  { level: 7, cost: 320, partners: 39, cycles: 24, revenue: 9340, Id: '1770558' },
-  { level: 8, cost: 640, partners: 26, cycles: 16, revenue: 8340, Id: '1770559' },
-  { level: 9, cost: 1250, partners: 16, cycles: 9, revenue: 7340, Id: '1770560' },
-  { level: 10, cost: 2500, partners: 10, cycles: 6, revenue: 6340, Id: '1770561' },
-  { level: 11, cost: 5000, partners: 5, cycles: 3, revenue: 5340, Id: '1770562' },
-  { level: 12, cost: 9900, partners: 2, cycles: 1, revenue: 4340, Id: '1770563' },
+  { level: 1, cost: 5 },
+  { level: 2, cost: 10 },
+  { level: 3, cost: 20 },
+  { level: 4, cost: 40 },
+  { level: 5, cost: 80 },
+  { level: 6, cost: 160 },
+  { level: 7, cost: 320 },
+  { level: 8, cost: 640 },
+  { level: 9, cost: 1250 },
+  { level: 10, cost: 2500 },
+  { level: 11, cost: 5000 },
+  { level: 12, cost: 9900 },
 ];
 
 const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
+  const { getTotalCycles, userX3Matrix } = useSmartContract();
+  
+  // State to hold cycles and partners data
+  const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
+  const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
+  
+  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const matrix = 1; // Assuming a static matrix ID, adjust if needed
+
+  useEffect(() => {
+    const fetchCyclesAndPartnersData = async () => {
+      try {
+        const updatedCycles = await Promise.all(
+          levels.map(async (level) => {
+            const cycles = await getTotalCycles(userAddress, matrix, level.level);
+            return cycles;
+          })
+        );
+
+        const updatedPartners = await Promise.all(
+          levels.map(async (level) => {
+            const partnersInfo = await userX3Matrix(userAddress, level.level);
+            const partnerCount = partnersInfo[1].length; // Assuming [1] contains the partner addresses
+            return partnerCount;
+          })
+        );
+
+        setCyclesData(updatedCycles);
+        setPartnersData(updatedPartners);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchCyclesAndPartnersData();
+  }, [getTotalCycles, userX3Matrix, userAddress, matrix]);
 
   const nextLevel = () => {
     if (currentLevel < 12) {
@@ -39,6 +76,11 @@ const LevelSlider: React.FC = () => {
   };
 
   const levelData = levels.find(level => level.level === currentLevel);
+
+  // Calculate adjusted partners count
+  const adjustedPartnersCount = cyclesData[currentLevel - 1] !== null 
+    ? cyclesData[currentLevel - 1] * 3 + partnersData[currentLevel - 1] 
+    : 0;
 
   return (
     <>
@@ -59,30 +101,32 @@ const LevelSlider: React.FC = () => {
               <div className="p-9">
                 <div className="flex justify-between items-center mb-6">
                   <div className="text-xl font-bold">Lvl {levelData.level}</div>
-                  <div className="text-xl font-bold">ID {levelData.Id}</div>
+                  <div className="text-xl font-bold">ID {1}</div>
                   <div className="text-lg">{levelData.cost} BUSD</div>
                 </div>
                 <div className="flex justify-center items-center mb-6 gap-4">
-                  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-white text-black font-bold rounded-full flex items-center justify-center">
-                    17713
-                  </div>
-                  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-blue-400 rounded-full flex items-center justify-center">
-                    10235
-                  </div>
-                  <div className="w-16 h-16 lg:w-24 lg:h-24 p-2 bg-blue-400 rounded-full flex items-center justify-center">
-                    3625
-                  </div>
+                  {/* Partner Circles */}
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-10 h-10 rounded-full ${
+                        i < partnersData[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400' // Blue if i < adjustedPartnersCount, else gray
+                      }`}
+                    />
+
+                  ))}
+                  
                 </div>
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center">
-                    <span className="mr-2">👥</span> {levelData.partners}
+                    <span className="mr-2">👥</span> {adjustedPartnersCount}
                   </div>
                   <div className="flex items-center">
-                    <span className="mr-2">🔄</span> {levelData.cycles}
+                    <span className="mr-2">🔄</span> {cyclesData[currentLevel - 1] !== null ? cyclesData[currentLevel - 1] : 'Loading...'}
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span className="mr-2">💰</span> {levelData.revenue} BUSD
+                  <span className="mr-2">💰</span> {0} BUSD
                 </div>
               </div>
             </div>
