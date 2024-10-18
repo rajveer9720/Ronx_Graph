@@ -59,47 +59,57 @@ const levelData = [
   { level: 11, cost: 5000 },
   { level: 12, cost: 9900 },
 ];
-
 const RonxGrid: React.FC = () => {
-  const { getTotalCycles } = useSmartContract(); // Use getTotalCycles method
+  const { getTotalCycles, userX3Matrix } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelData.length).fill(null));
-  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // User address
-  const matrix = 1; // Matrix value
+  const [partnersData, setPartnersData] = useState<number[]>(Array(levelData.length).fill(0)); // Initialize with numbers
+  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const matrix = 1;
 
   useEffect(() => {
-    const fetchCyclesData = async () => {
+    const fetchCyclesAndPartnersData = async () => {
       try {
         const updatedCycles = await Promise.all(
           levelData.map(async (data) => {
-            console.log(`Fetching cycles for userAddress: ${userAddress}, matrix: ${matrix}, level: ${data.level}`);
             const cycles = await getTotalCycles(userAddress, matrix, data.level);
-            console.log(`Level ${data.level} cycles:`, cycles); // Log cycles for each level
-            return cycles; // Return the fetched cycles
+            return cycles;
           })
         );
+
+        const updatedPartners = await Promise.all(
+          levelData.map(async (data) => {
+            const partnersInfo = await userX3Matrix(userAddress, data.level);
+            const partnerCount = partnersInfo[1].length; // Assuming [1] contains the partner addresses
+            return partnerCount; 
+          })
+        );
+
         setCyclesData(updatedCycles);
+        setPartnersData(updatedPartners);
       } catch (error) {
-        console.error("Error fetching cycles data:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchCyclesData();
-  }, [getTotalCycles]);
+    fetchCyclesAndPartnersData();
+  }, [getTotalCycles, userX3Matrix]);
 
   return (
     <div className="p-5 min-h-screen text-white">
       <div className="container mx-auto">
         <h1 className="text-3xl font-bold mb-5">Forsage x3</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
-          {levelData.map((data, index) => (
-            <LevelCard
-              key={data.level}
-              level={data.level}
-              cost={data.cost}
-              partners={cyclesData[index] !== null ? cyclesData[index] * 3 : 0} // Show cycles * 3 or 0 if null
-              cycles={cyclesData[index]} // Pass fetched cycles to the card
-            />
-          ))}
+          {levelData.map((data, index) => {
+            return (
+              <LevelCard
+                key={data.level}
+                level={data.level}
+                cost={data.cost}
+                partners={cyclesData[index] !== null ? cyclesData[index] * 3 + partnersData[index] : 0} // Adjusted partners calculation
+                cycles={cyclesData[index]} 
+              />
+            );
+          })}
         </div>
       </div>
       <NotifyBot />
@@ -108,3 +118,4 @@ const RonxGrid: React.FC = () => {
 };
 
 export default RonxGrid;
+

@@ -89,17 +89,21 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
       return null;
     }
   };
-  //fetch contract in Active current cycle data x3
-  const userX3Matrix = async (userAddress: string, level: number) => {
-    if (!contract) return null;
-    try {
-      const result = await contract.userX3Matrix(userAddress, level);
-      return result.toNumber(); // Assuming this returns a number
-    } catch (error) {
-      console.error("Error fetching userX3Matrix:", error);
-      return null;
-    }
-  };
+// Fetch users X3 matrix
+const userX3Matrix = async (userAddress: string, level: number) => {
+  if (!contract) return null;
+  try {
+    const result = await contract.usersX3Matrix(userAddress, level);
+    const address = result[0]; // The user address
+    const partners = result[1]; // Array of partner addresses
+    const isActive = result[2]; // Boolean for activity
+    console.log("result:"+ partners.toString() + level.toString);
+    return result; // Return relevant data
+  } catch (error) {
+    console.error("Error fetching usersX3Matrix:", error);
+    return null;
+  }
+};
   //fetch contract in active current cycle data x4
   const userX4Matrix = async(userAddress: string, level:number) => {
     if (!contract) return null;
@@ -125,7 +129,7 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, getTotalCycles, provider }}>
+    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, getTotalCycles, userX3Matrix, userX4Matrix, provider }}>
       {children}
     </SmartContractContext.Provider>
   );
