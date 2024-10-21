@@ -4,8 +4,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
 
-const CONTRACT_ADDRESS = "0xdB035d95F1C347D179C1f1DAA305011770880630";
-const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; // Replace with your Infura Project ID
+const CONTRACT_ADDRESS = "0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF";
+const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c";
 
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;
@@ -14,7 +14,7 @@ interface SmartContractContextType {
   usersActiveX4Levels: (userAddress: string, level: number) => Promise<boolean | null>;
   userX3Matrix: (userAddress: string, level: number) => Promise<number | null>;
   userX4Matrix: (userAddress: string, level: number) => Promise<number | null>;
-  
+  getPartnerCount: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
@@ -128,12 +128,26 @@ const userX3Matrix = async (userAddress: string, level: number) => {
     }
   };
 
+//GetPartnerCount that will be current time in latest number in partnerCount
+  const getPartnerCount = async (userAddress: string, matrix: number, level: number): Promise<number | null> => {
+    if (!contract) return null;
+    try {
+      const partnerCount = await contract.getPartnerCount(userAddress, matrix, level);
+      return partnerCount.toNumber(); // Assuming this returns a BigNumber that needs to be converted to a number
+    } catch (error) {
+      console.error("Error fetching partner count:", error);
+      return null;
+    }
+  };
+  
+
   return (
-    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, getTotalCycles, userX3Matrix, userX4Matrix, provider }}>
+    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, getTotalCycles, userX3Matrix, userX4Matrix,   getPartnerCount,  provider }}>
       {children}
     </SmartContractContext.Provider>
   );
 };
+
 
 export const useSmartContract = () => {
   const context = useContext(SmartContractContext);

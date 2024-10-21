@@ -78,11 +78,12 @@ const levelData = [
 ];
 
 const RonxGrid: React.FC = () => {
-  const { getTotalCycles, userX3Matrix } = useSmartContract();
+  const { getTotalCycles, userX3Matrix,getPartnerCount } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelData.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelData.length).fill(0)); // Initialize with numbers
   const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 1;
+  const [partnernew, setParntnerNew] = useState<number[]>(Array(levelData.length).fill(0)); // Initialize with numbers
 
   useEffect(() => {
     const fetchCyclesAndPartnersData = async () => {
@@ -102,15 +103,23 @@ const RonxGrid: React.FC = () => {
           })
         );
 
+           // Fetch partners count data for each level
+        const Partners = await Promise.all(
+          levelData.map(async (data) => {
+            const partnerCount = await getPartnerCount(userAddress, matrix, data.level);
+            return partnerCount || 0; // If partnerCount is null, fallback to 0
+            })
+        ); 
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
+        setParntnerNew(Partners);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
 
     fetchCyclesAndPartnersData();
-  }, [getTotalCycles, userX3Matrix]);
+  }, [getTotalCycles, userX3Matrix,getPartnerCount]);
 
   return (
     <div className="p-5 min-h-screen text-white">
@@ -122,7 +131,7 @@ const RonxGrid: React.FC = () => {
               key={data.level}
               level={data.level}
               cost={data.cost}
-              partners={cyclesData[index] !== null ? cyclesData[index] * 3 + partnersData[index] : 0} // Adjusted partners calculation
+              partners={partnernew[index]} // Adjusted partners calculation
               cycles={cyclesData[index]}
               partnersCount={partnersData[index]} // Pass the number of partners
             />

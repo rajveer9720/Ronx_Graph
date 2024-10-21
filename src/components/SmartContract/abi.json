@@ -263,6 +263,18 @@
     "type": "function"
   },
   {
+    "inputs": [
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint8", "name": "", "type": "uint8" },
+      { "internalType": "uint8", "name": "", "type": "uint8" },
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "name": "allDirectPartners",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "name": "balances",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
@@ -343,8 +355,36 @@
     "name": "getCycleInfo",
     "outputs": [
       { "internalType": "uint256", "name": "", "type": "uint256" },
-      { "internalType": "address[]", "name": "", "type": "address[]" }
+      { "internalType": "address[]", "name": "", "type": "address[]" },
+      { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
     ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "userAddress", "type": "address" },
+      { "internalType": "uint8", "name": "matrix", "type": "uint8" },
+      { "internalType": "uint8", "name": "level", "type": "uint8" }
+    ],
+    "name": "getPartnerCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getRecentActivity",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "userAddress", "type": "address" }
+    ],
+    "name": "getTeamSize",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -356,6 +396,19 @@
     ],
     "name": "getTotalCycles",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "time", "type": "uint256" },
+      { "internalType": "string", "name": "unit", "type": "string" }
+    ],
+    "name": "getUserRegistrationMetrics",
+    "outputs": [
+      { "internalType": "uint256", "name": "totalUsers", "type": "uint256" },
+      { "internalType": "uint256", "name": "recentUsers", "type": "uint256" }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
@@ -472,7 +525,12 @@
     "outputs": [
       { "internalType": "uint256", "name": "id", "type": "uint256" },
       { "internalType": "address", "name": "referrer", "type": "address" },
-      { "internalType": "uint256", "name": "partnersCount", "type": "uint256" }
+      { "internalType": "uint256", "name": "partnersCount", "type": "uint256" },
+      {
+        "internalType": "uint256",
+        "name": "registrationTime",
+        "type": "uint256"
+      }
     ],
     "stateMutability": "view",
     "type": "function"

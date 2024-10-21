@@ -1,6 +1,6 @@
 'use client'; // Ensure client-side rendering
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
 import LevelHeader from '@/components/levelheader/levelheader';
 import TransactionTable from '@/components/transaction/transaction-table'; 
@@ -26,8 +26,8 @@ const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
-  const { getTotalCycles, userX3Matrix } = useSmartContract();
-  
+  const { getTotalCycles, userX3Matrix, getPartnerCount } = useSmartContract();
+  const [currentPartner, setcurrentPartner] =useState<(number | null)[]>(Array(levels.length).fill(null));
   // State to hold cycles and partners data
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
@@ -38,6 +38,7 @@ const LevelSlider: React.FC = () => {
   useEffect(() => {
     const fetchCyclesAndPartnersData = async () => {
       try {
+        // Fetch total cycles data
         const updatedCycles = await Promise.all(
           levels.map(async (level) => {
             const cycles = await getTotalCycles(userAddress, matrix, level.level);
@@ -45,7 +46,15 @@ const LevelSlider: React.FC = () => {
           })
         );
 
+        // Fetch partners count data for each level
         const updatedPartners = await Promise.all(
+          levels.map(async (level) => {
+            const partnerCount = await getPartnerCount(userAddress, matrix, level.level);
+            return partnerCount || 0; // If partnerCount is null, fallback to 0
+            })
+        );
+          
+        const currenctData  = await Promise.all(
           levels.map(async (level) => {
             const partnersInfo = await userX3Matrix(userAddress, level.level);
             
@@ -58,6 +67,8 @@ const LevelSlider: React.FC = () => {
           })
         );
 
+        setcurrentPartner(currenctData);
+        // Update state with fetched data
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
       } catch (error) {
@@ -66,7 +77,7 @@ const LevelSlider: React.FC = () => {
     };
 
     fetchCyclesAndPartnersData();
-  }, [getTotalCycles, userX3Matrix, userAddress, matrix]);
+  }, [getTotalCycles, userX3Matrix, getPartnerCount, userAddress, matrix]);
 
   const nextLevel = () => {
     if (currentLevel < 12) {
@@ -82,10 +93,8 @@ const LevelSlider: React.FC = () => {
 
   const levelData = levels.find(level => level.level === currentLevel);
 
-  // Calculate adjusted partners count
-  const adjustedPartnersCount = cyclesData[currentLevel - 1] !== null 
-    ? cyclesData[currentLevel - 1] * 3 + partnersData[currentLevel - 1] 
-    : 0;
+  // Get the current level's partner count
+  const adjustedPartnersCount = partnersData[currentLevel - 1];
 
   return (
     <>
@@ -115,7 +124,7 @@ const LevelSlider: React.FC = () => {
                     <div
                       key={i}
                       className={`w-10 h-10 rounded-full ${
-                        i < partnersData[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400' // Blue if i < adjustedPartnersCount, else gray
+                        i < currentPartner[currentLevel - 1 ] ? 'bg-blue-600' : 'bg-gray-400' // Blue if i < adjustedPartnersCount, else gray
                       }`}
                     />
                   ))}
@@ -153,12 +162,4 @@ const LevelSlider: React.FC = () => {
   );
 };
 
-const LevelSliderWithSuspense: React.FC = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LevelSlider />
-    </Suspense>
-  );
-};
-
-export default LevelSliderWithSuspense;
+export default LevelSlider;
