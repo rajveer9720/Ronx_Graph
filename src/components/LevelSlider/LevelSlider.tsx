@@ -44,22 +44,27 @@ const LevelSlider: React.FC = () => {
             return cycles;
           })
         );
-
+    
         const updatedPartners = await Promise.all(
           levels.map(async (level) => {
             const partnersInfo = await userX3Matrix(userAddress, level.level);
-            const partnerCount = partnersInfo[1].length; // Assuming [1] contains the partner addresses
-            return partnerCount;
+            
+            if (partnersInfo && Array.isArray(partnersInfo[1])) {
+              const partnerCount = partnersInfo[1].length; // Assuming [1] contains the partner addresses
+              return partnerCount;
+            }
+            
+            return 0; // Return 0 if partnersInfo is null or not an array
           })
         );
-
+    
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-
+    
     fetchCyclesAndPartnersData();
   }, [getTotalCycles, userX3Matrix, userAddress, matrix]);
 
