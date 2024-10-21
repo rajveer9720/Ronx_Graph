@@ -5,11 +5,12 @@ import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
 
 const CONTRACT_ADDRESS = "0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF";
-const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c";
+const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
 
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;
   writeData: (methodName: string, ...params: any[]) => Promise<any | null>;
+  users: (userAddress: string) => Promise<{ id: number; referrer: string; partnersCount: number; registrationTime: number } | null>;
   usersActiveX3Levels: (userAddress: string, level: number) => Promise<boolean | null>;
   usersActiveX4Levels: (userAddress: string, level: number) => Promise<boolean | null>;
   userX3Matrix: (userAddress: string, level: number) => Promise<number | null>;
@@ -64,8 +65,25 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Users method to fetch user details based on the provided address
+  const users = async (userAddress: string) => {
+    if (!contract) return null;
+    try {
+      const result = await contract.users(userAddress);
+      const userData = {
+        id: result.id.toNumber(),
+        referrer: result.referrer,
+        partnersCount: result.partnersCount.toNumber(),
+        registrationTime: result.registrationTime.toNumber(),
+      };
+      return userData;
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      return null;
+    }
+  };
 
-  //User check active level in x3
+  // Check if a user is active in X3 at a certain level
   const usersActiveX3Levels = async (userAddress: string, level: number) => {
     if (!contract) return null;
     try {
@@ -77,46 +95,43 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-
-  //User check active levels in x4
-  const usersActiveX4Levels = async (userAddress: string, level: number) => { 
+  // Check if a user is active in X4 at a certain level
+  const usersActiveX4Levels = async (userAddress: string, level: number) => {
     if (!contract) return null;
     try {
-      const result = await contract.usersActiveX6Levels(userAddress, level);
+      const result = await contract.usersActiveX4Levels(userAddress, level);
       return result; // Assuming this returns a boolean
     } catch (error) {
       console.error("Error fetching usersActiveX4Levels:", error);
       return null;
     }
   };
-// Fetch users X3 matrix
-const userX3Matrix = async (userAddress: string, level: number) => {
-  if (!contract) return null;
-  try {
-    const result = await contract.usersX3Matrix(userAddress, level);
-    const address = result[0]; // The user address
-    const partners = result[1]; // Array of partner addresses
-    const isActive = result[2]; // Boolean for activity
-    console.log("result:"+ partners.toString() + level.toString);
-    return result; // Return relevant data
-  } catch (error) {
-    console.error("Error fetching usersX3Matrix:", error);
-    return null;
-  }
-};
-  //fetch contract in active current cycle data x4
-  const userX4Matrix = async(userAddress: string, level:number) => {
+
+  // Fetch users X3 matrix
+  const userX3Matrix = async (userAddress: string, level: number) => {
     if (!contract) return null;
     try {
-      const result = await contract.userX4Matrix(userAddress, level);
+      const result = await contract.usersX3Matrix(userAddress, level);
+      return result; // Return relevant data
+    } catch (error) {
+      console.error("Error fetching usersX3Matrix:", error);
+      return null;
+    }
+  };
+
+  // Fetch contract data for X4 matrix
+  const userX4Matrix = async (userAddress: string, level: number) => {
+    if (!contract) return null;
+    try {
+      const result = await contract.usersX4Matrix(userAddress, level);
       return result.toNumber(); // Assuming this returns a number
     } catch (error) {
       console.error("Error fetching userX4Matrix:", error);
       return null;
     }
-  }
+  };
 
-  //fetch any user currect time in complete cycle in any matrix and any level 
+  // Fetch the total cycles for a user at a certain level and matrix
   const getTotalCycles = async (userAddress: string, matrix: number, level: number) => {
     if (!contract) return null;
     try {
@@ -128,7 +143,7 @@ const userX3Matrix = async (userAddress: string, level: number) => {
     }
   };
 
-//GetPartnerCount that will be current time in latest number in partnerCount
+  // Fetch the partner count for a user at a certain level and matrix
   const getPartnerCount = async (userAddress: string, matrix: number, level: number): Promise<number | null> => {
     if (!contract) return null;
     try {
@@ -139,16 +154,28 @@ const userX3Matrix = async (userAddress: string, level: number) => {
       return null;
     }
   };
-  
 
   return (
-    <SmartContractContext.Provider value={{ fetchData, writeData, usersActiveX3Levels, usersActiveX4Levels, getTotalCycles, userX3Matrix, userX4Matrix,   getPartnerCount,  provider }}>
+    <SmartContractContext.Provider
+      value={{
+        fetchData,
+        writeData,
+        users,
+        usersActiveX3Levels,
+        usersActiveX4Levels,
+        getTotalCycles,
+        userX3Matrix,
+        userX4Matrix,
+        getPartnerCount,
+        provider,
+      }}
+    >
       {children}
     </SmartContractContext.Provider>
   );
 };
 
-
+// Hook to use the SmartContract context
 export const useSmartContract = () => {
   const context = useContext(SmartContractContext);
   if (context === undefined) {

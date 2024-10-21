@@ -26,7 +26,7 @@ const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
-  const { getTotalCycles, userX3Matrix, getPartnerCount } = useSmartContract();
+  const { getTotalCycles, userX3Matrix, getPartnerCount, users } = useSmartContract();
   const [currentPartner, setcurrentPartner] =useState<(number | null)[]>(Array(levels.length).fill(null));
   // State to hold cycles and partners data
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
@@ -34,6 +34,36 @@ const LevelSlider: React.FC = () => {
   
   const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
+
+  const [userData, setUserData] = useState<{
+    id: number;
+    referrer: string;
+    partnersCount: number;
+    registrationTime: number;
+  } | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch user data when component mounts
+  const handleFetchUser = async () => {
+    try {
+      const data = await users(userAddress);
+      if (data) {
+        setUserData(data);
+        setError(null); // Clear error if successful
+      } else {
+        setError("No data found for the user.");
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      setError("Failed to fetch user data. Please try again.");
+    }
+  };
+
+  // Call handleFetchUser when the component mounts
+  useEffect(() => {
+    handleFetchUser();
+  }, [users, userAddress]); // Make sure to add dependencies
 
   useEffect(() => {
     const fetchCyclesAndPartnersData = async () => {
@@ -115,7 +145,7 @@ const LevelSlider: React.FC = () => {
               <div className="p-9">
                 <div className="flex justify-between items-center mb-6">
                   <div className="text-xl font-bold">Lvl {levelData.level}</div>
-                  <div className="text-xl font-bold">ID {1}</div>
+                  <div className="text-xl font-bold">ID: {userData?.id || 'Loading...'}</div> {/* Safely access userData.id */}
                   <div className="text-lg">{levelData.cost} BUSD</div>
                 </div>
                 <div className="flex justify-center items-center mb-6 gap-4">
