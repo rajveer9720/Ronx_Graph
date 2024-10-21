@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
 import LevelHeader from '@/components/levelheader/levelheader';
-import TransactionTable from '@/components/transaction/transaction-table'; 
+import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 
@@ -27,11 +27,11 @@ const LevelSlider: React.FC = () => {
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
   const { getTotalCycles, userX3Matrix, getPartnerCount, users } = useSmartContract();
-  const [currentPartner, setcurrentPartner] =useState<(number | null)[]>(Array(levels.length).fill(null));
-  // State to hold cycles and partners data
+  const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
-  
+  const [partnerIds, setPartnerIds] = useState<(string | null)[][]>(Array(levels.length).fill([])); // State to hold partner IDs
+
   const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
 
@@ -44,7 +44,6 @@ const LevelSlider: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user data when component mounts
   const handleFetchUser = async () => {
     try {
       const data = await users(userAddress);
@@ -60,15 +59,13 @@ const LevelSlider: React.FC = () => {
     }
   };
 
-  // Call handleFetchUser when the component mounts
   useEffect(() => {
     handleFetchUser();
-  }, [users, userAddress]); // Make sure to add dependencies
+  }, [users, userAddress]);
 
   useEffect(() => {
     const fetchCyclesAndPartnersData = async () => {
       try {
-        // Fetch total cycles data
         const updatedCycles = await Promise.all(
           levels.map(async (level) => {
             const cycles = await getTotalCycles(userAddress, matrix, level.level);
@@ -76,29 +73,55 @@ const LevelSlider: React.FC = () => {
           })
         );
 
-        // Fetch partners count data for each level
         const updatedPartners = await Promise.all(
           levels.map(async (level) => {
             const partnerCount = await getPartnerCount(userAddress, matrix, level.level);
-            return partnerCount || 0; // If partnerCount is null, fallback to 0
-            })
+            return partnerCount || 0;
+          })
         );
-          
-        const currenctData  = await Promise.all(
+
+        const fetchUserIdByAddress = async (partnerAddress: string) => {
+          try {
+            const userInfo = await users(partnerAddress);
+            if (userInfo) {
+              return userInfo.id;
+            }
+            return null;
+          } catch (error) {
+            console.error(`Error fetching user ID for address ${partnerAddress}:`, error);
+            return null;
+          }
+        };
+
+        const currenctData = await Promise.all(
           levels.map(async (level) => {
             const partnersInfo = await userX3Matrix(userAddress, level.level);
-            
+
             if (partnersInfo && Array.isArray(partnersInfo[1])) {
-              const partnerCount = partnersInfo[1].length; // Assuming [1] contains the partner addresses
+              const partnerAddresses = partnersInfo[1];
+              const partnerCount = partnerAddresses.length;
+
+              const userIds = await Promise.all(
+                partnerAddresses.map(async (address) => {
+                  const userId = await fetchUserIdByAddress(address);
+                  return userId;
+                })
+              );
+
+              setPartnerIds((prev) => {
+                const newPartnerIds = [...prev];
+                newPartnerIds[level.level - 1] = userIds;
+                return newPartnerIds;
+              });
+
               return partnerCount;
             }
-            
-            return 0; // Return 0 if partnersInfo is null or not an array
+
+            return 0;
           })
         );
 
         setcurrentPartner(currenctData);
-        // Update state with fetched data
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
       } catch (error) {
@@ -122,8 +145,6 @@ const LevelSlider: React.FC = () => {
   };
 
   const levelData = levels.find(level => level.level === currentLevel);
-
-  // Get the current level's partner count
   const adjustedPartnersCount = partnersData[currentLevel - 1];
 
   return (
@@ -132,9 +153,8 @@ const LevelSlider: React.FC = () => {
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
-          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${
-            currentLevel === 1 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
-          }`}
+          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${currentLevel === 1 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
+            }`}
           disabled={currentLevel === 1}
         >
           {currentLevel > 1 ? currentLevel - 1 : ''}
@@ -149,16 +169,23 @@ const LevelSlider: React.FC = () => {
                   <div className="text-lg">{levelData.cost} BUSD</div>
                 </div>
                 <div className="flex justify-center items-center mb-6 gap-4">
-                  {/* Partner Circles */}
+                  {/* Partner Circles with User IDs */}
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`w-10 h-10 rounded-full ${
-                        i < currentPartner[currentLevel - 1 ] ? 'bg-blue-600' : 'bg-gray-400' // Blue if i < adjustedPartnersCount, else gray
-                      }`}
-                    />
+                    <div key={i} className="flex flex-col items-center">
+                      <div
+                        className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
+                      >
+                        {/* Center User ID within the circle */}
+                        {i < currentPartner[currentLevel - 1] && partnerIds[currentLevel - 1]?.[i] && (
+                          <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
+                            {partnerIds[currentLevel - 1][i]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
+
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center">
                     <span className="mr-2">👥</span> {adjustedPartnersCount}
@@ -176,9 +203,8 @@ const LevelSlider: React.FC = () => {
         </div>
         <button
           onClick={nextLevel}
-          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${
-            currentLevel === 12 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
-          }`}
+          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${currentLevel === 12 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
+            }`}
           disabled={currentLevel === 12}
         >
           {currentLevel < 12 ? currentLevel + 1 : ''}
