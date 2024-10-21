@@ -1,6 +1,6 @@
 'use client'; // Ensure client-side rendering
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
 import LevelHeader from '@/components/levelheader/levelheader';
 import TransactionTable from '@/components/transaction/transaction-table'; 
@@ -44,7 +44,7 @@ const LevelSlider: React.FC = () => {
             return cycles;
           })
         );
-    
+
         const updatedPartners = await Promise.all(
           levels.map(async (level) => {
             const partnersInfo = await userX3Matrix(userAddress, level.level);
@@ -57,14 +57,14 @@ const LevelSlider: React.FC = () => {
             return 0; // Return 0 if partnersInfo is null or not an array
           })
         );
-    
+
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-    
+
     fetchCyclesAndPartnersData();
   }, [getTotalCycles, userX3Matrix, userAddress, matrix]);
 
@@ -118,9 +118,7 @@ const LevelSlider: React.FC = () => {
                         i < partnersData[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400' // Blue if i < adjustedPartnersCount, else gray
                       }`}
                     />
-
                   ))}
-                  
                 </div>
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center">
@@ -155,4 +153,12 @@ const LevelSlider: React.FC = () => {
   );
 };
 
-export default LevelSlider;
+const LevelSliderWithSuspense: React.FC = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LevelSlider />
+    </Suspense>
+  );
+};
+
+export default LevelSliderWithSuspense;
