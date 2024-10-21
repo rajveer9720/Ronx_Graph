@@ -31,6 +31,13 @@ const LevelSlider: React.FC = () => {
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
   const [partnerIds, setPartnerIds] = useState<(string | null)[][]>(Array(levels.length).fill([])); // State to hold partner IDs
+  // Upline user address id
+  const [uplineuserData, setuplineuserData] = useState<{
+    id: number;
+    referrer: string;
+    partnersCount: number;
+    registrationTime: number;
+  } | null>(null);
 
   const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
@@ -44,12 +51,17 @@ const LevelSlider: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch current user data
   const handleFetchUser = async () => {
     try {
       const data = await users(userAddress);
       if (data) {
         setUserData(data);
         setError(null); // Clear error if successful
+        // Fetch the referrer (upline user data) based on the referrer address from the userData
+        if (data.referrer) {
+          handleFetchUserupline(data.referrer);
+        }
       } else {
         setError("No data found for the user.");
       }
@@ -59,10 +71,27 @@ const LevelSlider: React.FC = () => {
     }
   };
 
+  // Fetch upline user data
+  const handleFetchUserupline = async (referrerAddress: string) => {
+    try {
+      const data = await users(referrerAddress);
+      if (data) {
+        setuplineuserData(data);
+        setError(null); // Clear error if successful
+      } else {
+        setError("No data found for the upline.");
+      }
+    } catch (err) {
+      console.error("Error fetching upline user data:", err);
+      setError("Failed to fetch upline user data. Please try again.");
+    }
+  };
+
   useEffect(() => {
     handleFetchUser();
   }, [users, userAddress]);
 
+  // Fetch cycles and partner data
   useEffect(() => {
     const fetchCyclesAndPartnersData = async () => {
       try {
@@ -149,7 +178,7 @@ const LevelSlider: React.FC = () => {
 
   return (
     <>
-      <LevelHeader level={currentLevel} uplineId={123456} />
+      <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
