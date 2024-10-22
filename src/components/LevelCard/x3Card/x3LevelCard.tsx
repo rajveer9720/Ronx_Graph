@@ -15,7 +15,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/retro/levelslider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
+    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
   };
 
   // Generate partner circles with conditional coloring
