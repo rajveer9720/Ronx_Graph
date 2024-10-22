@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
-import LevelCard from './LevelCard'; // Ensure the path is correct
+import LevelCard from './x4LevelCard'; // Ensure the path is correct
 
 const levelDataX4 = [
     { level: 1, cost: 5 },
