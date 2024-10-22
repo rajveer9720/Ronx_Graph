@@ -1,4 +1,3 @@
-// components/Program.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -26,19 +25,16 @@ const Program: React.FC = () => {
         const levelsStatusX3 = await Promise.all(
           Array.from({ length: 12 }, (_, index) => usersActiveX3Levels(userAddress, index + 1))
         );
-        const booleanLevelsStatusX3 = levelsStatusX3.map(status => status === null ? false : status);
+        const booleanLevelsStatusX3 = levelsStatusX3.map(status => status !== null); // Convert to boolean
         setActiveLevelsX3(booleanLevelsStatusX3); 
-        // Log the x3 active levels array
-      console.log('Active Levels x3:', booleanLevelsStatusX3);
+        console.log('Active Levels x3:', booleanLevelsStatusX3);
 
         const levelsStatusX4 = await Promise.all(
           Array.from({ length: 12 }, (_, index) => usersActiveX4Levels(userAddress, index + 1))
         );
-        const booleanLevelsStatusX4 = levelsStatusX4.map(status => status === null ? false : status);
+        const booleanLevelsStatusX4 = levelsStatusX4.map(status => status !== null); // Convert to boolean
         setActiveLevelsX4(booleanLevelsStatusX4);
-              
-      // Log the x4 active levels array
-      console.log('Active Levels x4:', booleanLevelsStatusX4);
+        console.log('Active Levels x4:', booleanLevelsStatusX4);
       } catch (error) {
         console.error('Error fetching active levels:', error);
       } finally {
@@ -59,8 +55,13 @@ const Program: React.FC = () => {
     }
   };
 
-  const handleRegisterBUSD = () => {
-    router.push('/retro/program');
+  // Updated handleRegisterBUSD to accept program name and navigate accordingly
+  const handleRegisterBUSD = (name: string) => {
+    if (name === 'x3') {
+      router.push('/retro/program/x3'); // Path for x3 program
+    } else if (name === 'x4') {
+      router.push('/retro/program/x4'); // Path for x4 program
+    }
   };
 
   const renderGridItems = (activeLevels: boolean[], programName: string) => {
@@ -79,7 +80,7 @@ const Program: React.FC = () => {
     <div className="flex-1 mb-8 p-6 rounded-lg" style={{ background: 'linear-gradient(to bottom, #000000, #753a88, #3a1c71)' }}>
       <a
         className={`relative flex flex-col p-4 sm:p-6 w-full rounded z-10 overflow-hidden justify-between min-h-36 ${activeProgram === program.name ? 'border-white' : 'border-transparent'} cursor-pointer`}
-        onClick={handleRegisterBUSD}
+        onClick={() => handleRegisterBUSD(program.name)} // Pass program name to handleRegisterBUSD
         style={{
           backgroundImage: `url(/assets/${program.name}-bg.jpg)`,
           backgroundSize: 'cover',
