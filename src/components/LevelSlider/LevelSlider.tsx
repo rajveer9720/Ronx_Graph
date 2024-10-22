@@ -129,7 +129,7 @@ const LevelSlider: React.FC = () => {
             if (partnersInfo && Array.isArray(partnersInfo[1])) {
               const partnerAddresses = partnersInfo[1];
               const partnerCount = partnerAddresses.length;
-
+              console.log("partnerCount:"+ partnerCount);
               const userIds = await Promise.all(
                 partnerAddresses.map(async (address) => {
                   const userId = await fetchUserIdByAddress(address);
@@ -175,7 +175,15 @@ const LevelSlider: React.FC = () => {
 
   const levelData = levels.find(level => level.level === currentLevel);
   const adjustedPartnersCount = partnersData[currentLevel - 1];
+  // Calculate total revenue considering cycles and partners
+  const cyclesContribution = cyclesData[currentLevel - 1] * 2 * levelData.cost;
+  console.log("total cyclesCountribution:" + cyclesContribution);
+  const partnerContribution = currentPartner[currentLevel - 1] * levelData.cost;
+  console.log("total partnerContribution:" + partnerContribution);
+  const totalRevenue = cyclesContribution + partnerContribution;
+  console.log("total totalRevenue:" + totalRevenue);
 
+  // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
       <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
@@ -224,7 +232,9 @@ const LevelSlider: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex justify-center items-center">
-                  <span className="mr-2">💰</span> {0} BUSD
+                  <span className="mr-2">💰</span>
+                  {totalRevenue}
+                  BUSD
                 </div>
               </div>
             </div>
