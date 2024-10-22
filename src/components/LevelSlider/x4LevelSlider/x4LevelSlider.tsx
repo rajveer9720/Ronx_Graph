@@ -27,20 +27,23 @@ const LevelSlider: React.FC = () => {
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
   const { getTotalCycles, userX4Matrix, getPartnerCount, users } = useSmartContract();
-  const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
+  const [currentPartnerLayer1, setCurrentPartnerLayer1] = useState<(number | null)[]>(Array(levels.length).fill(null));
+  const [currentPartnerLayer2, setCurrentPartnerLayer2] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
-  const [partnerIds, setPartnerIds] = useState<(string | null)[][]>(Array(levels.length).fill([])); // State to hold partner IDs
-  // Upline user address id
-  const [uplineuserData, setuplineuserData] = useState<{
-    id: number;
-    referrer: string;
-    partnersCount: number;
-    registrationTime: number;
-  } | null>(null);
+  const [partnerIdsLayer1, setPartnerIdsLayer1] = useState<(string | null)[][]>(Array(levels.length).fill([])); // For Layer 1 IDs
+  const [partnerIdsLayer2, setPartnerIdsLayer2] = useState<(string | null)[][]>(Array(levels.length).fill([])); // For Layer 2 IDs
+    // Upline user address id
+    const [uplineuserData, setuplineuserData] = useState<{
+        id: number;
+        referrer: string;
+        partnersCount: number;
+        registrationTime: number;
+      } | null>(null);
+    
 
   const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
-  const matrix = 1; // Assuming a static matrix ID, adjust if needed
+  const matrix = 2; // Assuming a static matrix ID, adjust if needed
 
   const [userData, setUserData] = useState<{
     id: number;
@@ -58,10 +61,9 @@ const LevelSlider: React.FC = () => {
       if (data) {
         setUserData(data);
         setError(null); // Clear error if successful
-        // Fetch the referrer (upline user data) based on the referrer address from the userData
         if (data.referrer) {
-          handleFetchUserupline(data.referrer);
-        }
+            handleFetchUserupline(data.referrer);
+          }
       } else {
         setError("No data found for the user.");
       }
@@ -95,6 +97,7 @@ const LevelSlider: React.FC = () => {
   useEffect(() => {
     const fetchCyclesAndPartnersData = async () => {
       try {
+        // Fetch total cycles for each level
         const updatedCycles = await Promise.all(
           levels.map(async (level) => {
             const cycles = await getTotalCycles(userAddress, matrix, level.level);
@@ -102,6 +105,7 @@ const LevelSlider: React.FC = () => {
           })
         );
 
+        // Fetch partner counts for each level
         const updatedPartners = await Promise.all(
           levels.map(async (level) => {
             const partnerCount = await getPartnerCount(userAddress, matrix, level.level);
@@ -122,35 +126,53 @@ const LevelSlider: React.FC = () => {
           }
         };
 
-        const currenctData = await Promise.all(
+        // Fetch partner data for both layers
+        const layer1Data = await Promise.all(
           levels.map(async (level) => {
             const partnersInfo = await userX4Matrix(userAddress, level.level);
-
             if (partnersInfo && Array.isArray(partnersInfo[1])) {
-              const partnerAddresses = partnersInfo[1];
-              const partnerCount = partnerAddresses.length;
-              console.log("partnerCount:"+ partnerCount);
-              const userIds = await Promise.all(
-                partnerAddresses.map(async (address) => {
+              const partnerAddressesLayer1 = partnersInfo[1];
+              const userIdsLayer1 = await Promise.all(
+                partnerAddressesLayer1.map(async (address) => {
                   const userId = await fetchUserIdByAddress(address);
                   return userId;
                 })
               );
-
-              setPartnerIds((prev) => {
+              setPartnerIdsLayer1((prev) => {
                 const newPartnerIds = [...prev];
-                newPartnerIds[level.level - 1] = userIds;
+                newPartnerIds[level.level - 1] = userIdsLayer1;
                 return newPartnerIds;
               });
-
-              return partnerCount;
+              return partnerAddressesLayer1.length;
             }
-
             return 0;
           })
         );
 
-        setcurrentPartner(currenctData);
+        const layer2Data = await Promise.all(
+          levels.map(async (level) => {
+            const partnersInfo = await userX4Matrix(userAddress, level.level);
+            if (partnersInfo && Array.isArray(partnersInfo[2])) {
+              const partnerAddressesLayer2 = partnersInfo[2];
+              const userIdsLayer2 = await Promise.all(
+                partnerAddressesLayer2.map(async (address) => {
+                  const userId = await fetchUserIdByAddress(address);
+                  return userId;
+                })
+              );
+              setPartnerIdsLayer2((prev) => {
+                const newPartnerIds = [...prev];
+                newPartnerIds[level.level - 1] = userIdsLayer2;
+                return newPartnerIds;
+              });
+              return partnerAddressesLayer2.length;
+            }
+            return 0;
+          })
+        );
+
+        setCurrentPartnerLayer1(layer1Data);
+        setCurrentPartnerLayer2(layer2Data);
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
       } catch (error) {
@@ -175,15 +197,10 @@ const LevelSlider: React.FC = () => {
 
   const levelData = levels.find(level => level.level === currentLevel);
   const adjustedPartnersCount = partnersData[currentLevel - 1];
-  // Calculate total revenue considering cycles and partners
-  const cyclesContribution = cyclesData[currentLevel - 1] * 2 * levelData.cost;
-  console.log("total cyclesCountribution:" + cyclesContribution);
-  const partnerContribution = currentPartner[currentLevel - 1] * levelData.cost;
-  console.log("total partnerContribution:" + partnerContribution);
+  const cyclesContribution = cyclesData[currentLevel - 1] * 3 * levelData.cost;
+  const partnerContribution = Math.min(currentPartnerLayer2[currentLevel - 1], 3) * levelData.cost;
   const totalRevenue = cyclesContribution + partnerContribution;
-  console.log("total totalRevenue:" + totalRevenue);
 
-  // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
       <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id}  />
@@ -205,44 +222,41 @@ const LevelSlider: React.FC = () => {
                   <div className="text-xl font-bold">ID: {userData?.id || 'Loading...'}</div> {/* Safely access userData.id */}
                   <div className="text-lg">{levelData.cost} BUSD</div>
                 </div>
+
+                {/* First Layer of Partner Circles */}
                 <div className="flex justify-center items-center mb-6 gap-4">
-                    {/* first layer of partner circles */}
-                {Array.from({ length: 2}).map((_, i) => (
+                  {Array.from({ length: 2 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
-                        className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
+                        className={`relative w-24 h-24 rounded-full ${i < currentPartnerLayer1[currentLevel - 1] ? 'bg-blue-300' : 'bg-gray-400'
+                          }`}
                       >
-                        {/* Center User ID within the circle */}
-                        {i < currentPartner[currentLevel - 1] && partnerIds[currentLevel - 1]?.[i] && (
-                          <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
-                            {partnerIds[currentLevel - 1][i]}
-                          </span>
-                        )}
+                        <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">
+                          {partnerIdsLayer1[currentLevel - 1][i] || 'N/A'}
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Second Layer of Partner Circles */}
                 <div className="flex justify-center items-center mb-6 gap-4">
-                  {/* second layer of partner circles */}
-                  {/* Partner Circles with User IDs */}
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
-                        className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
+                        className={`relative w-24 h-24 rounded-full ${i < currentPartnerLayer2[currentLevel - 1] ? 'bg-blue-300' : 'bg-gray-400'
+                          }`}
                       >
-                        {/* Center User ID within the circle */}
-                        {i < currentPartner[currentLevel - 1] && partnerIds[currentLevel - 1]?.[i] && (
-                          <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
-                            {partnerIds[currentLevel - 1][i]}
-                          </span>
-                        )}
+                        <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">
+                          {partnerIdsLayer2[currentLevel - 1][i] || 'N/A'}
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center">
+                <div className="flex items-center">
                     <span className="mr-2">👥</span> {adjustedPartnersCount}
                   </div>
                   <div className="flex items-center">
@@ -253,7 +267,7 @@ const LevelSlider: React.FC = () => {
                   <span className="mr-2">💰</span>
                   {totalRevenue}
                   BUSD
-                </div>
+                                  </div>
               </div>
             </div>
           )}
@@ -267,10 +281,8 @@ const LevelSlider: React.FC = () => {
           {currentLevel < 12 ? currentLevel + 1 : ''}
         </button>
       </div>
-      <div className="my-9">
-        <NotifyBot />
-        <TransactionTable />
-      </div>
+      <TransactionTable />
+      <NotifyBot />
     </>
   );
 };

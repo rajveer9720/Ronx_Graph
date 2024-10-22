@@ -26,6 +26,7 @@ const X4Grid: React.FC = () => {
   const { getTotalCycles, userX4Matrix, getPartnerCount } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
+  const [partnersDatalayer2, setPartnersDatalayer2] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 2; // x4 matrix
   const [partnerNew, setPartnerNew] = useState<number[]>(Array(levelDataX4.length).fill(0));
@@ -46,7 +47,12 @@ const X4Grid: React.FC = () => {
             return partnersInfo[1].length;
           })
         );
-
+        const updatedPartnerslayer2 = await Promise.all(
+          levelDataX4.map(async (data) => {
+            const partnersInfo = await userX4Matrix(userAddress, data.level); // Adjust function for x4
+            return partnersInfo[2].length;
+          })
+        );
         const partnersCount = await Promise.all(
           levelDataX4.map(async (data) => {
             return await getPartnerCount(userAddress, matrix, data.level) || 0;
@@ -55,6 +61,7 @@ const X4Grid: React.FC = () => {
 
         setCyclesData(updatedCycles);
         setPartnersData(updatedPartners);
+        setPartnersDatalayer2(updatedPartnerslayer2);
         setPartnerNew(partnersCount);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -77,6 +84,7 @@ const X4Grid: React.FC = () => {
               partners={partnerNew[index]}
               cycles={cyclesData[index]}
               partnersCount={partnersData[index]}
+              partnersCountlayer2={partnersDatalayer2[index]}
             />
           ))}
         </div>

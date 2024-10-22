@@ -7,8 +7,9 @@ interface LevelCardProps {
   partners: number;
   cycles: number | null; // Allow cycles to be null initially
   partnersCount: number; // Number of partners for level
+  partnersCountlayer2:number;
 }
-const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount }) => {
+const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount,partnersCountlayer2 }) => {
   const router = useRouter();
   const handleClick = () => {
     router.push(`/retro/levelslider/x4slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
@@ -26,11 +27,11 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
       );
     }
     // Second row (4 spots)
-    for (let i = 2; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       circles.push(
         <div
           key={`bottom-${i}`}
-          className={`w-10 h-10 rounded-full ${i < partnersCount ? 'bg-blue-500' : 'bg-gray-400'}`} // Blue if i < partnersCount, else gray
+          className={`w-10 h-10 rounded-full ${i < partnersCountlayer2 ? 'bg-blue-500' : 'bg-gray-400'}`} // Blue if i < partnersCount, else gray
         ></div>
       );
     }
