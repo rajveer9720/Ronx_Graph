@@ -1,3 +1,4 @@
+"use client"
 import TransactionTable from '@/components/transaction/transaction-table';
 import Program from '@/components/program/program';
 import Dashboard from '@/components/dashboard/dashboard';

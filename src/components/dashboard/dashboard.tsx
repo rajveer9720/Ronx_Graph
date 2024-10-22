@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 
 interface StatCardProps {
   title: string;
@@ -17,14 +18,55 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
 };
 
 const Dashboard: React.FC = () => {
+  const { users } = useSmartContract();
+  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Replace with dynamic address if needed
+  const [userData, setUserData] = useState<{
+    id: number;
+    referrer: string;
+    partnersCount: number;
+    registrationTime: number;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch user data
+  const handleFetchUser = async () => {
+    try {
+      const data = await users(userAddress);
+      if (data) {
+        setUserData(data);
+        setError(null); // Clear error if successful
+      } else {
+        setError("No data found for the user.");
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      setError("Failed to fetch user data. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    handleFetchUser();
+  }, [users, userAddress]);
+
   return (
     <div className="my-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mx-auto text-center items-center">
-    <StatCard title="Partners" value="16" increase="↑ 0" />
-    <StatCard title="Team" value="21" increase="↑ 0" />
-    <StatCard title="Ratio" value="209%" increase="↑ 0%" />
-    <StatCard title="Profits" value="3,891 " increase="↑ 0\n↑ 0" />
-  </div>
-   );
+      {userData ? (
+        <>
+          <StatCard
+            title="Partners"
+            value={userData.partnersCount.toString()}
+            increase="↑ 0"
+          />
+          <StatCard title="Team" value="21" increase="↑ 0" />
+          <StatCard title="Ratio" value="209%" increase="↑ 0%" />
+          <StatCard title="Profits" value="3,891" increase="↑ 0\n↑ 0" />
+        </>
+      ) : (
+        <div>Loading user data...</div>
+      )}
+      {error && <div className="text-red-500">{error}</div>}
+    </div>
+  );
 };
 
 export default Dashboard;

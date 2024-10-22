@@ -99,7 +99,7 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
   const usersActiveX4Levels = async (userAddress: string, level: number) => {
     if (!contract) return null;
     try {
-      const result = await contract.usersActiveX4Levels(userAddress, level);
+      const result = await contract.usersActiveX6Levels(userAddress, level);
       return result; // Assuming this returns a boolean
     } catch (error) {
       console.error("Error fetching usersActiveX4Levels:", error);

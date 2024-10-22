@@ -12,7 +12,7 @@ const programs = [
 
 const Program: React.FC = () => {
   const router = useRouter();
-  const { usersActiveX3Levels, usersActiveX4Levels, getPartnerCount } = useSmartContract();
+  const { usersActiveX3Levels, usersActiveX4Levels } = useSmartContract();
   const [activeProgram, setActiveProgram] = useState<string | null>(null);
   const [activeLevelsX3, setActiveLevelsX3] = useState<boolean[]>(Array(12).fill(false));
   const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false));
