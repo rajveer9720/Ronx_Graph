@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
-import LevelHeader from '@/components/levelheader/levelheader';
+import LevelHeader from '@/components/levelheader/x4levelheader/x4levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
@@ -26,7 +26,7 @@ const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
-  const { getTotalCycles, userX3Matrix, getPartnerCount, users } = useSmartContract();
+  const { getTotalCycles, userX4Matrix, getPartnerCount, users } = useSmartContract();
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
@@ -124,7 +124,7 @@ const LevelSlider: React.FC = () => {
 
         const currenctData = await Promise.all(
           levels.map(async (level) => {
-            const partnersInfo = await userX3Matrix(userAddress, level.level);
+            const partnersInfo = await userX4Matrix(userAddress, level.level);
 
             if (partnersInfo && Array.isArray(partnersInfo[1])) {
               const partnerAddresses = partnersInfo[1];
@@ -159,7 +159,7 @@ const LevelSlider: React.FC = () => {
     };
 
     fetchCyclesAndPartnersData();
-  }, [getTotalCycles, userX3Matrix, getPartnerCount, userAddress, matrix]);
+  }, [getTotalCycles, userX4Matrix, getPartnerCount, userAddress, matrix]);
 
   const nextLevel = () => {
     if (currentLevel < 12) {
@@ -186,7 +186,7 @@ const LevelSlider: React.FC = () => {
   // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
-      <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
+      <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id}  />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
@@ -206,8 +206,26 @@ const LevelSlider: React.FC = () => {
                   <div className="text-lg">{levelData.cost} BUSD</div>
                 </div>
                 <div className="flex justify-center items-center mb-6 gap-4">
+                    {/* first layer of partner circles */}
+                {Array.from({ length: 2}).map((_, i) => (
+                    <div key={i} className="flex flex-col items-center">
+                      <div
+                        className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
+                      >
+                        {/* Center User ID within the circle */}
+                        {i < currentPartner[currentLevel - 1] && partnerIds[currentLevel - 1]?.[i] && (
+                          <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
+                            {partnerIds[currentLevel - 1][i]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-center items-center mb-6 gap-4">
+                  {/* second layer of partner circles */}
                   {/* Partner Circles with User IDs */}
-                  {Array.from({ length: 3 }).map((_, i) => (
+                  {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
                         className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
