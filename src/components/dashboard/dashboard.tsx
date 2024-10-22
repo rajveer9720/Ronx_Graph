@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
         setUserData(data);
         setError(null); // Clear error if successful
       } else {
-        setError("No data found for the user.");
+        setError(".");
       }
     } catch (err) {
       console.error("Error fetching user data:", err);

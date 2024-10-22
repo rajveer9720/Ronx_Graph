@@ -124,7 +124,7 @@ const RonxGrid: React.FC = () => {
   return (
     <div className="p-5 min-h-screen text-white">
       <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-5">Forsage x3</h1>
+        <h1 className="text-3xl font-bold mb-5">Ronx x3</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
           {levelData.map((data, index) => (
             <LevelCard

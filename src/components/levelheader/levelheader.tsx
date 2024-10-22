@@ -10,7 +10,7 @@ const LevelHeader: React.FC<LevelHeaderProps> = ({ level, uplineId }) => {
   return (
     <div className="flex flex-col ">
       <div className="text-white text-sm mb-2">
-        ID 5 / Forsage x3 / <span className="text-gray-400">level {level}</span>
+        ID 5 / Ronx x3 / <span className="text-gray-400">level {level}</span>
       </div>
       <div className="text-white text-4xl font-bold mb-4">
         level {level}
