@@ -123,8 +123,8 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
   const userX4Matrix = async (userAddress: string, level: number) => {
     if (!contract) return null;
     try {
-      const result = await contract.usersX4Matrix(userAddress, level);
-      return result.toNumber(); // Assuming this returns a number
+      const result = await contract.usersX6Matrix(userAddress, level);
+      return result; // Assuming this returns a number
     } catch (error) {
       console.error("Error fetching userX4Matrix:", error);
       return null;

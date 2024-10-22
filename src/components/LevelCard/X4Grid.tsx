@@ -8,17 +8,18 @@ import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './LevelCard'; // Ensure the path is correct
 
 const levelDataX4 = [
-  { level: 1, cost: 10 },
-  { level: 2, cost: 20 },
-  { level: 3, cost: 40 },
-  { level: 4, cost: 80 },
-  { level: 5, cost: 160 },
-  { level: 6, cost: 320 },
-  { level: 7, cost: 640 },
-  { level: 8, cost: 1250 },
-  { level: 9, cost: 2500 },
-  { level: 10, cost: 5000 },
-  { level: 11, cost: 9900 },
+    { level: 1, cost: 5 },
+    { level: 2, cost: 10 },
+    { level: 3, cost: 20 },
+    { level: 4, cost: 40 },
+    { level: 5, cost: 80 },
+    { level: 6, cost: 160 },
+    { level: 7, cost: 320 },
+    { level: 8, cost: 640 },
+    { level: 9, cost: 1250 },
+    { level: 10, cost: 2500 },
+    { level: 11, cost: 5000 },
+    { level: 12, cost: 9900 },
 ];
 
 const X4Grid: React.FC = () => {
