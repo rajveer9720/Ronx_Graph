@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 const programs = [
@@ -11,30 +11,60 @@ const programs = [
 
 const Program: React.FC = () => {
   const router = useRouter();
-  const { usersActiveX3Levels, usersActiveX4Levels } = useSmartContract();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get('userId'); // Extract userId from query parameters
+
+  console.log("User id:", userId);
+
+  const { usersActiveX3Levels, usersActiveX4Levels, getUserIdsWalletaddress } = useSmartContract();
   const [activeProgram, setActiveProgram] = useState<string | null>(null);
   const [activeLevelsX3, setActiveLevelsX3] = useState<boolean[]>(Array(12).fill(false));
   const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false));
-  const [loading, setLoading] = useState(true); // Loading state
-  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const [loading, setLoading] = useState(true);
+  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
 
+  // Fetch user wallet address if userId is provided, else use static address
   useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (userId) {
+        try {
+          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
+          if (walletAddress) {
+            console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
+            setUserAddress(walletAddress); // Set the fetched wallet address
+          }
+        } catch (error) {
+          console.error("Error fetching wallet address for userId:", error);
+          setUserAddress(staticAddress); // Use static address if fetching fails
+        }
+      } else {
+        // If no userId, use static wallet address
+        setUserAddress(staticAddress);
+      }
+    };
+
+    fetchUserAddress();
+  }, [userId, getUserIdsWalletaddress]);
+
+  // Fetch active levels based on wallet address
+  useEffect(() => {
+    if (!userAddress) return; // Wait for the userAddress to be set
+
     const fetchActiveLevels = async () => {
       setLoading(true); // Start loading
       try {
+        // Fetch x3 levels for the current wallet address
         const levelsStatusX3 = await Promise.all(
           Array.from({ length: 12 }, (_, index) => usersActiveX3Levels(userAddress, index + 1))
         );
-        const booleanLevelsStatusX3 = levelsStatusX3.map(status => status !== null); // Convert to boolean
-        setActiveLevelsX3(booleanLevelsStatusX3); 
-        console.log('Active Levels x3:', booleanLevelsStatusX3);
+        setActiveLevelsX3(levelsStatusX3.map(status => !!status)); // Set active levels for x3
 
+        // Fetch x4 levels for the current wallet address
         const levelsStatusX4 = await Promise.all(
           Array.from({ length: 12 }, (_, index) => usersActiveX4Levels(userAddress, index + 1))
         );
-        const booleanLevelsStatusX4 = levelsStatusX4.map(status => status !== null); // Convert to boolean
-        setActiveLevelsX4(booleanLevelsStatusX4);
-        console.log('Active Levels x4:', booleanLevelsStatusX4);
+        setActiveLevelsX4(levelsStatusX4.map(status => !!status)); // Set active levels for x4
       } catch (error) {
         console.error('Error fetching active levels:', error);
       } finally {
@@ -43,19 +73,12 @@ const Program: React.FC = () => {
     };
 
     fetchActiveLevels();
-  }, [usersActiveX3Levels, usersActiveX4Levels, userAddress]);
+  }, [userAddress, usersActiveX3Levels, usersActiveX4Levels]);
 
   const handleClick = (name: string) => {
     setActiveProgram(name);
-    if (name !== 'x3') {
-      setActiveLevelsX3(Array(12).fill(false));
-    }
-    if (name !== 'x4') {
-      setActiveLevelsX4(Array(12).fill(false));
-    }
   };
 
-  // Updated handleRegisterBUSD to accept program name and navigate accordingly
   const handleRegisterBUSD = (name: string) => {
     if (name === 'x3') {
       router.push('/retro/program/x3'); // Path for x3 program

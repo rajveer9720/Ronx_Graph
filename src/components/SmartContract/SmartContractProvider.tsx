@@ -20,6 +20,8 @@ interface SmartContractContextType {
   getUserRecentActivityUserMatrics: (timesteamp:number, uint: string) => Promise<number | null>;
   
   getPlatformRecentActivity: ()=> Promise<number |null>;
+  getUserIdsWalletaddress: (userid: number) => Promise<number | null>;
+
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -182,6 +184,19 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+
+  // Function to fetch wallet address using userId
+const getUserIdsWalletaddress = async (userId: number) => {
+  if (!contract) return null;
+  try {
+    // Call smart contract method to get the wallet address by userId
+    const address = await contract.userIds(userId);
+    return address;  // Address will be returned as a single value
+  } catch (error) {
+    console.error("Error fetching user wallet address through userId:", error);
+    return null;
+  }
+};
   return (
     <SmartContractContext.Provider
       value={{
@@ -196,6 +211,7 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
         getPartnerCount,
         getUserRecentActivityUserMatrics,
         getPlatformRecentActivity,
+        getUserIdsWalletaddress,
         provider,
       }}
     >
