@@ -18,6 +18,8 @@ interface SmartContractContextType {
   getPartnerCount: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getUserRecentActivityUserMatrics: (timesteamp:number, uint: string) => Promise<number | null>;
+  
+  getPlatformRecentActivity: ()=> Promise<number |null>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -168,6 +170,18 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //fetch Platform recentActivity that related data display in fetch in method
+  const getPlatformRecentActivity = async () => {
+    if (!contract) return null;
+    try {
+      const result = await contract.getRecentActivity();
+      return result; // Return relevant data
+    } catch (error) {
+      console.error("Error fetching platform recent activity:", error);
+      return null;
+    }
+  };
+
   return (
     <SmartContractContext.Provider
       value={{
@@ -181,6 +195,7 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
         userX4Matrix,
         getPartnerCount,
         getUserRecentActivityUserMatrics,
+        getPlatformRecentActivity,
         provider,
       }}
     >

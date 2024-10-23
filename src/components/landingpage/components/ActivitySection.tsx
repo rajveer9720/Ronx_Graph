@@ -1,85 +1,110 @@
 import React, { useEffect, useState } from 'react';
-
 import Image from '@/components/ui/image';
 import BannerSecond from '@/assets/images/BannerSecond.png';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
-const activities = [
-  { id: 1, icon: '🟢', description: 'New user joined', amount: '0.57 BUSD', time: '3 minutes ago' },
-  { id: 2, icon: '🟢', description: 'New user joined', amount: '1.25 BUSD', time: '5 minutes ago' },
-  { id: 3, icon: '🟢', description: 'Transaction', amount: '8.34 BUSD', time: '10 minutes ago' },
-  { id: 4, icon: '🟢', description: 'Transaction', amount: '2.75 BUSD', time: '15 minutes ago' },
-  { id: 5, icon: '🟢', description: 'New user joined', amount: '1.00 BUSD', time: '20 minutes ago' },
-  { id: 6, icon: '🟢', description: 'New user joined', amount: '0.50 BUSD', time: '30 minutes ago' },
-  { id: 7, icon: '🟢', description: 'Transaction', amount: '5.67 BUSD', time: '40 minutes ago' },
-  { id: 8, icon: '🟢', description: 'New user joined', amount: '1.75 BUSD', time: '50 minutes ago' },
-  // Add more activities as needed
-];
-
 const ActivitySection: React.FC = () => {
-  const { getUserRecentActivityUserMatrics } = useSmartContract();
-  const [totalUser, setTotalUser] = useState();
-  const [recentUser, setRecentUser] = useState();
+  const { getUserRecentActivityUserMatrics, getPlatformRecentActivity } = useSmartContract();
+  const [totalUser, setTotalUser] = useState(0);
+  const [recentUser, setRecentUser] = useState(0);
+  const [activities, setActivities] = useState<any[]>([]);
 
-
-  //fetch getUserRecentActivityUserMatrixcs data 
+  // Fetch getUserRecentActivityUserMatrics data 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUserMetrics = async () => {
       const data = await getUserRecentActivityUserMatrics(24, "hour");
       if (data) {
-        console.log("Fetched data:", data);
         const totalUsers = data.totalUsers?.toNumber() || 0;
         const recentUsers = data.recentUsers?.toNumber() || 0;
-        console.log("Total Users:", totalUsers);
-        console.log("Recent Users:", recentUsers);
         setTotalUser(totalUsers);
         setRecentUser(recentUsers);
       } else {
-        console.warn("No data returned from smart contract.");
         setTotalUser(0);
         setRecentUser(0);
       }
     };
-    fetchData();
+    fetchUserMetrics();
   }, [getUserRecentActivityUserMatrics]);
+
+  // Fetch platform recent activity data in the specified format
+  useEffect(() => {
+    const fetchPlatformActivity = async () => {
+      try {
+        const data = await getPlatformRecentActivity();
+        console.log("test data platformUser:", data?.toString()); // Log entire string data
+  
+        if (data) {
+          // Split the string by new lines to separate each activity
+          const activityLines = data.split("\n");
+  
+          // Extract user activity details from each line using regex
+          const formattedActivities = activityLines.map((line: string) => {
+            const regex = /User ID: (\d+) - Action: ([\w\s]+) - Matrix: (\d+) - Level: (\d+) - Timestamp: (\d+)/;
+            const match = line.match(regex);
+  
+            if (match) {
+              const [, userId, action, matrix, level, timestamp] = match;
+  
+              return {
+                userId,
+                action,
+                matrix,
+                level,
+                timestamp: new Date(parseInt(timestamp, 10) * 1000).toLocaleString(), // Convert to readable date
+              };
+            } else {
+              return null; // In case there's a mismatch, skip it
+            }
+          }).filter(Boolean); // Remove any null entries
+  
+          setActivities(formattedActivities);
+        }
+      } catch (error) {
+        console.error('Error fetching platform activity:', error);
+      }
+    };
+  
+    fetchPlatformActivity();
+  }, [getPlatformRecentActivity]);
   
 
-
-
-
   return (
-    <section
-      className="my-6"
-
-    >
-      <div className="" >
-        <div className=" pb-9 w-full mx-auto text-center text-white px-4 sm:px-6 lg:px-8 bg-black bg-opacity-60 rounded-lg" style={{
-          backgroundImage: `url(${BannerSecond.src})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-
-        }}>
-          <h2 className="m-6 pt-7  text-4xl font-bold mb-4">Platform Recent Activity</h2>
+    <section className="my-6">
+      <div>
+        <div className="pb-9 w-full mx-auto text-center text-white px-4 sm:px-6 lg:px-8 bg-black bg-opacity-60 rounded-lg"
+          style={{
+            backgroundImage: `url(${BannerSecond.src})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}>
+          <h2 className="m-6 pt-7 text-4xl font-bold mb-4">Platform Recent Activity</h2>
           <p className="text-lg mb-8">Real-time global events of the RonX Platform</p>
           <div className="bg-black rounded-lg overflow-hidden shadow-lg">
             <div className="overflow-y-auto max-h-96">
-              <ul className="divide-y divide-gray-700">
-                {activities.map((activity) => (
-                  <li key={activity.id} className="flex items-center justify-between p-4 hover:bg-gray-800">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-4">{activity.icon}</span>
-                      <div>
-                        <p className="text-lg font-semibold">{activity.description}</p>
-                        <p className="text-gray-400">{activity.amount}</p>
-                      </div>
-                    </div>
-                    <span className="text-gray-400">{activity.time}</span>
-                  </li>
-                ))}
-              </ul>
+              <table className="table-auto w-full text-left text-white">
+                <thead>
+                  <tr className="bg-gray-800">
+                    <th className="px-4 py-2">User ID</th>
+                    <th className="px-4 py-2">Action</th>
+                    <th className="px-4 py-2">Matrix</th>
+                    <th className="px-4 py-2">Level</th>
+                    <th className="px-4 py-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activities.map((activity, index) => (
+                    <tr key={index} className="hover:bg-gray-700">
+                      <td className="px-4 py-2">{activity.userId}</td>
+                      <td className="px-4 py-2">{activity.action}</td>
+                      <td className="px-4 py-2">{activity.matrix}</td>
+                      <td className="px-4 py-2">{activity.level}</td>
+                      <td className="px-4 py-2">{activity.timestamp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <button className="w-full p-4 bg-gray-800 text-white font-semibold hover:bg-gray-700">See more</button>
           </div>
           <div className="text-center text-white mt-10">
             <h2 className="text-3xl font-bold mb-4">Partner Results</h2>
@@ -90,10 +115,9 @@ const ActivitySection: React.FC = () => {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-around">
               <div className="mb-6 sm:mb-0">
-              <span>Memeber Total</span>
+                <span>Member Total</span>
                 <span className="block text-4xl font-bold">{totalUser}</span>
                 <span className="block text-2xl font-bold text-blue-500">{recentUser}</span>
-                  
               </div>
               <div className="mb-6 sm:mb-0">
                 <span className="block text-4xl font-bold">22,631</span>

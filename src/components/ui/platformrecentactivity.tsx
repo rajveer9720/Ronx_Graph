@@ -1,22 +1,55 @@
-import React, { useEffect, useState } from 'react';
-const PlatformRecentActivity: React.FC = () => {
-  const activities = [
-    { id: '1423735', action: '+10 BUSD in x4', time: '1 hour' },
-    { id: '1745488', action: '+5 BUSD in x3', time: '1 hour' },
-    { id: 'new', action: 'New user joined', userId: '1768044', time: '1 hour' },
-    { id: '1744074', action: '+5 BUSD in x4', time: '1 hour' },
-    { id: '1648601', action: '+5 BUSD in x4', time: '1 hour' },
-    { id: '1195996', action: '+10 BUSD in x4', time: '1 hour' },
-    { id: 'new', action: 'New user joined', userId: '1768043', time: '1 hour' },
-    { id: '1715046', action: '+5 BUSD in x4', time: '1 hour' },
-    { id: '1647340', action: '+20 BUSD in x3', time: '1 hour' },
-    { id: '1709744', action: '+5 BUSD in x4', time: '1 hour' },
-    { id: 'new', action: 'New user joined', userId: '1768041', time: '1 hour' },
-  ];
 
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation'; // Ensure you are using the correct import for App Router
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+
+const PlatformRecentActivity: React.FC = () => {
+  const router = useRouter(); // Use the router from 'next/navigation'
+  const { getPlatformRecentActivity } = useSmartContract();
+  const [activities, setActivities] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPlatformActivity = async () => {
+      try {
+        const data = await getPlatformRecentActivity();
+        console.log("test data platformUser:", data?.toString()); // Log entire string data
+
+        if (data) {
+          // Split the string by new lines to separate each activity
+          const activityLines = data.split("\n");
+
+          // Extract user activity details from each line using regex
+          const formattedActivities = activityLines.map((line: string) => {
+            const regex = /User ID: (\d+) - Action: ([\w\s]+) - Matrix: (\d+) - Level: (\d+) - Timestamp: (\d+)/;
+            const match = line.match(regex);
+
+            if (match) {
+              const [, userId, action, matrix, level, timestamp] = match;
+
+              return {
+                userId,
+                action,
+                matrix,
+                level,
+                timestamp: new Date(parseInt(timestamp, 10) * 1000).toLocaleString(), // Convert to readable date
+              };
+            } else {
+              return null; // In case there's a mismatch, skip it
+            }
+          }).filter(Boolean); // Remove any null entries
+
+          setActivities(formattedActivities);
+        }
+      } catch (error) {
+        console.error('Error fetching platform activity:', error);
+      }
+    };
+
+    fetchPlatformActivity();
+  }, [getPlatformRecentActivity]);
 
   const handleRegisterBUSD = () => {
-    window.location.href = 'http://localhost:3000/retro'; // Replace with your desired URL
+    router.push('/retro'); // Use router.push for navigation
   };
 
   return (
@@ -25,27 +58,32 @@ const PlatformRecentActivity: React.FC = () => {
         <h2 className="text-xl font-semibold mb-4">Platform Recent Activity</h2>
         <div className="bg-gray-800 rounded-lg p-4 mb-4 flex-1 flex flex-col overflow-hidden">
           <div className="overflow-y-auto max-h-96">
-            {activities.slice(0, 7).map((activity, index) => (
-              <div key={index} className="flex mt-5 items-center rounded-lg bg-gray-100 p-5 dark:bg-light-dark justify-between mb-2">
-                <div className="flex items-center">
-                  <div className="bg-green-500 h-8 w-8 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">ID</span>
-                  </div>
-                  <div className="ml-4">
-                    {activity.id !== 'new' ? (
-                      <div>
-                        <a onClick={handleRegisterBUSD}><span className="text-blue-500 cursor-pointer">{`ID ${activity.id}`}</span></a> {activity.action}
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="text-gray-400">{activity.action}</span> <span className="text-blue-500">{`ID ${activity.userId}`}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="text-gray-500">{activity.time}</div>
-              </div>
-            ))}
+            <table className="table-auto w-full text-left text-white">
+              <thead>
+                <tr className="bg-gray-700">
+                  <th className="px-4 py-2">User ID</th>
+                  <th className="px-4 py-2">Action</th>
+                  <th className="px-4 py-2">Matrix</th>
+                  <th className="px-4 py-2">Level</th>
+                  <th className="px-4 py-2">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activities.slice(0, 7).map((activity, index) => (
+                  <tr key={index} className="hover:bg-gray-700">
+                    <td className="px-4 py-2">
+                      <a onClick={handleRegisterBUSD} className="text-blue-500 cursor-pointer">
+                        {`ID ${activity.userId}`}
+                      </a>
+                    </td>
+                    <td className="px-4 py-2">{activity.action}</td>
+                    <td className="px-4 py-2">{activity.matrix}</td>
+                    <td className="px-4 py-2">{activity.level}</td>
+                    <td className="px-4 py-2">{activity.timestamp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <div className="mt-auto">
             <button className="w-full p-3 bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none">
@@ -57,7 +95,9 @@ const PlatformRecentActivity: React.FC = () => {
       <div className="mt-10">
         <div className="bg-gray-800 rounded-lg p-4 mb-4 flex-1">
           <h3 className="text-lg font-semibold mb-2">RonX BUSD Contracts</h3>
-          <p className="text-sm flex mt-3 items-center rounded-lg bg-gray-100 p-2 dark:bg-light-dark justify-between mb-1">x3/x4: <span className="text-blue-500">0x5ac...b97</span></p>
+          <p className="text-sm flex mt-3 items-center rounded-lg bg-gray-100 p-2 dark:bg-light-dark justify-between mb-1">
+            x3/x4: <span className="text-blue-500">0x5ac...b97</span>
+          </p>
         </div>
       </div>
     </div>

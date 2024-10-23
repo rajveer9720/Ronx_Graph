@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   useTable,
   useResizeColumns,
@@ -15,7 +15,8 @@ import { LongArrowRight } from '@/components/icons/long-arrow-right';
 import { LongArrowLeft } from '@/components/icons/long-arrow-left';
 import { LinkIcon } from '@/components/icons/link-icon';
 import { TransactionData } from '@/data/static/transaction-data';
-
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+import { get } from 'lodash';
 const COLUMNS = [
   {
     Header: 'ID',
@@ -75,8 +76,34 @@ const COLUMNS = [
 
 
 export default function TransactionTable() {
+  const { getPlatformRecentActivity } = useSmartContract();
   const data = React.useMemo(() => TransactionData, []);
   const columns = React.useMemo(() => COLUMNS, []);
+
+
+
+  //fetch GetPlatformRecentActivity data 
+  // User ID: 18 - Action: Registration - Timestamp: 1729655514 string
+  // Platform in this function getPlatformRecentActivity this value formate retrun 
+
+  useEffect (() => {
+   const fetchData = async () => {
+    try{
+    const data = await getPlatformRecentActivity();
+    const UserId = data?.UserId.toString();
+    const Action = data?.Action.toString();
+    const Timestamp = data?.Timestamp.toString();
+    console.log(data);
+    }catch(error){
+      console.error('Error fetching data:', error);
+    }
+
+
+   };
+
+
+   fetchData();
+  },[getPlatformRecentActivity])
 
   const {
     getTableProps,
@@ -121,44 +148,7 @@ export default function TransactionTable() {
               {...getTableProps()}
               className="transaction-table w-full border-separate border-0"
             >
-              {/* <thead className="text-sm text-gray-500 dark:text-gray-300">
-                {headerGroups.map((headerGroup, idx) => (
-                  <tr {...headerGroup.getHeaderGroupProps()} key={idx}>
-                    {headerGroup.headers.map((column, idx) => (
-                      <th
-                        {...column.getHeaderProps(
-                          column.getSortByToggleProps()
-                        )}
-                        key={idx}
-                        className="group  bg-white px-2 py-5 font-normal first:rounded-bl-lg last:rounded-br-lg ltr:first:pl-8 ltr:last:pr-8 rtl:first:pr-8 rtl:last:pl-8 dark:bg-light-dark md:px-4"
-                      >
-                        <div className="flex items-center">
-                          {column.render('Header')}
-                          {column.canResize && (
-                            <div
-                              {...column.getResizerProps()}
-                              className={`resizer ${
-                                column.isResizing ? 'isResizing' : ''
-                              }`}
-                            />
-                          )}
-                          <span className="ltr:ml-1 rtl:mr-1">
-                            {column.isSorted ? (
-                              column.isSortedDesc ? (
-                                <ChevronDown />
-                              ) : (
-                                <ChevronDown className="rotate-180" />
-                              )
-                            ) : (
-                              <ChevronDown className="rotate-180 opacity-0 transition group-hover:opacity-50" />
-                            )}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead> */}
+         
               <tbody
                 {...getTableBodyProps()}
                 className="text-xs font-medium text-gray-900 dark:text-white 3xl:text-sm"
