@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Image from '@/components/ui/image';
 import BannerSecond from '@/assets/images/BannerSecond.png';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 const activities = [
   { id: 1, icon: '🟢', description: 'New user joined', amount: '0.57 BUSD', time: '3 minutes ago' },
@@ -16,19 +17,49 @@ const activities = [
 ];
 
 const ActivitySection: React.FC = () => {
+  const { getUserRecentActivityUserMatrics } = useSmartContract();
+  const [totalUser, setTotalUser] = useState();
+  const [recentUser, setRecentUser] = useState();
+
+
+  //fetch getUserRecentActivityUserMatrixcs data 
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getUserRecentActivityUserMatrics(24, "hour");
+      if (data) {
+        console.log("Fetched data:", data);
+        const totalUsers = data.totalUsers?.toNumber() || 0;
+        const recentUsers = data.recentUsers?.toNumber() || 0;
+        console.log("Total Users:", totalUsers);
+        console.log("Recent Users:", recentUsers);
+        setTotalUser(totalUsers);
+        setRecentUser(recentUsers);
+      } else {
+        console.warn("No data returned from smart contract.");
+        setTotalUser(0);
+        setRecentUser(0);
+      }
+    };
+    fetchData();
+  }, [getUserRecentActivityUserMatrics]);
+  
+
+
+
+
   return (
-    <section 
-      className="my-6" 
-      
+    <section
+      className="my-6"
+
     >
       <div className="" >
         <div className=" pb-9 w-full mx-auto text-center text-white px-4 sm:px-6 lg:px-8 bg-black bg-opacity-60 rounded-lg" style={{
-        backgroundImage: `url(${BannerSecond.src})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-     
-      }}>
+          backgroundImage: `url(${BannerSecond.src})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+
+        }}>
           <h2 className="m-6 pt-7  text-4xl font-bold mb-4">Platform Recent Activity</h2>
           <p className="text-lg mb-8">Real-time global events of the RonX Platform</p>
           <div className="bg-black rounded-lg overflow-hidden shadow-lg">
@@ -52,15 +83,17 @@ const ActivitySection: React.FC = () => {
           </div>
           <div className="text-center text-white mt-10">
             <h2 className="text-3xl font-bold mb-4">Partner Results</h2>
-            <p>All data is stored in the blockchain in the public domain and can be verified!<br/>
-              Contract address eth: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97<br/>
-              Contract address tron: TREbha3Jj6TrpT7e6Z5ukh3NRhyxHsmMug<br/>
+            <p>All data is stored in the blockchain in the public domain and can be verified!<br />
+              Contract address eth: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97<br />
+              Contract address tron: TREbha3Jj6TrpT7e6Z5ukh3NRhyxHsmMug<br />
               Contract address busd: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-around">
               <div className="mb-6 sm:mb-0">
-                <span className="block text-4xl font-bold">1,756,920</span>
-                <span>Accounts Created</span>
+              <span>Memeber Total</span>
+                <span className="block text-4xl font-bold">{totalUser}</span>
+                <span className="block text-2xl font-bold text-blue-500">{recentUser}</span>
+                  
               </div>
               <div className="mb-6 sm:mb-0">
                 <span className="block text-4xl font-bold">22,631</span>

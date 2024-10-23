@@ -17,6 +17,7 @@ interface SmartContractContextType {
   userX4Matrix: (userAddress: string, level: number) => Promise<number | null>;
   getPartnerCount: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
+  getUserRecentActivityUserMatrics: (timesteamp:number, uint: string) => Promise<number | null>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -155,6 +156,18 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  //last 24 hourse fetch recent activity in user register and buy new level that relate data fetch
+  const getUserRecentActivityUserMatrics = async (timestemp: number ,uint: string) => {
+    if (!contract) return null;
+    try {
+      const result = await contract.getUserRegistrationMetrics(timestemp,uint);
+      return result; // Return relevant data
+    } catch (error) {
+      console.error("Error fetching user recent activity:", error);
+      return null;
+    }
+  };
+
   return (
     <SmartContractContext.Provider
       value={{
@@ -167,6 +180,7 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
         userX3Matrix,
         userX4Matrix,
         getPartnerCount,
+        getUserRecentActivityUserMatrics,
         provider,
       }}
     >
