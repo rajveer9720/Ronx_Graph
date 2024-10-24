@@ -55,7 +55,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const handleClick = () => {
     const userIdParam = userId ? `&userId=${userId}` : ''; // Append userId if it exists
 
-    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}${userIdParam}`);
+    router.push(`/retro/levelslider/x4slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}${userIdParam}`);
   };
   // Generate 6 partner circles (2 on top, 4 on bottom)
   const renderPartnerCircles = () => {

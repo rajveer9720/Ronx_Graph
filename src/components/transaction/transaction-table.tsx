@@ -10,100 +10,90 @@ import {
 } from 'react-table';
 import Button from '@/components/ui/button';
 import Scrollbar from '@/components/ui/scrollbar';
-import { ChevronDown } from '@/components/icons/chevron-down';
 import { LongArrowRight } from '@/components/icons/long-arrow-right';
 import { LongArrowLeft } from '@/components/icons/long-arrow-left';
-import { LinkIcon } from '@/components/icons/link-icon';
-import { TransactionData } from '@/data/static/transaction-data';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
-import { get } from 'lodash';
+
 const COLUMNS = [
   {
-    Header: 'ID',
-    accessor: 'id',
+    Header: 'User ID',
+    accessor: 'userId',
     minWidth: 60,
     maxWidth: 80,
   },
   {
-    Header: 'Type',
-    accessor: 'transactionType',
+    Header: 'Action',
+    accessor: 'action',
+    minWidth: 100,
+    maxWidth: 150,
+  },
+  {
+    Header: 'Matrix',
+    accessor: 'matrix',
+    minWidth: 60,
+    maxWidth: 100,
+  },
+  {
+    Header: 'Level',
+    accessor: 'level',
     minWidth: 60,
     maxWidth: 80,
   },
   {
-    Header: () => <div className="ltr:ml-auto rtl:mr-auto">Date</div>,
-    accessor: 'createdAt',
-    // @ts-ignore
-    Cell: ({ cell: { value } }) => (
-      <div className="ltr:text-right rtl:text-left">{value}</div>
-    ),
+    Header: 'Timestamp',
+    accessor: 'timestamp',
     minWidth: 160,
     maxWidth: 220,
-  },
-  {
-    Header: () => <div className="ltr:ml-auto rtl:mr-auto">Asset</div>,
-    accessor: 'symbol',
-    // @ts-ignore
+    // Align timestamp to the left
     Cell: ({ cell: { value } }) => (
-      <div className="ltr:text-right rtl:text-left">{value}</div>
+      <div className="text-left">{value}</div>
     ),
-    minWidth: 80,
-    maxWidth: 120,
-  },
-  {
-    Header: () => <div className="hidden">Status</div>,
-    accessor: 'status',
-    // @ts-ignore
-    Cell: ({ cell: { value } }) => (
-      <div className="hidden">{value}</div>
-    ),
-    minWidth: 100,
-    maxWidth: 180,
-  },
-  {
-    Header: () => <div className="ltr:ml-auto rtl:mr-auto">Address</div>,
-    accessor: 'address',
-    // @ts-ignore
-    Cell: ({ cell: { value } }) => (
-      <div className="flex items-center justify-end">
-        <LinkIcon className="h-[18px] w-[18px] ltr:mr-2 rtl:ml-2" /> {value}
-      </div>
-    ),
-    minWidth: 220,
-    maxWidth: 280,
   },
 ];
 
-
 export default function TransactionTable() {
   const { getPlatformRecentActivity } = useSmartContract();
-  const data = React.useMemo(() => TransactionData, []);
+  const [tableData, setTableData] = useState([]);
   const columns = React.useMemo(() => COLUMNS, []);
 
+  // Fetch platform recent activity data
+  useEffect(() => {
+    const fetchPlatformActivity = async () => {
+      try {
+        const data = await getPlatformRecentActivity();
+        if (data) {
+          const activityLines = data.split("\n");
 
+          const formattedActivities = activityLines
+            .map((line: string) => {
+              const regex =
+                /User ID: (\d+) - Action: ([\w\s]+) - Matrix: (\d+) - Level: (\d+) - Timestamp: (\d+)/;
+              const match = line.match(regex);
 
-  //fetch GetPlatformRecentActivity data 
-  // User ID: 18 - Action: Registration - Timestamp: 1729655514 string
-  // Platform in this function getPlatformRecentActivity this value formate retrun 
+              if (match) {
+                const [, userId, action, matrix, level, timestamp] = match;
 
-  useEffect (() => {
-   const fetchData = async () => {
-    try{
-    const data = await getPlatformRecentActivity();
-    const UserId = data?.UserId.toString();
-    const Action = data?.Action.toString();
-    const Timestamp = data?.Timestamp.toString();
-    console.log(data);
-    }catch(error){
-      console.error('Error fetching data:', error);
-    }
+                return {
+                  userId,
+                  action,
+                  matrix,
+                  level,
+                  timestamp: new Date(parseInt(timestamp, 10) * 1000).toLocaleString(), // Convert to readable date
+                };
+              }
+              return null;
+            })
+            .filter(Boolean);
 
+          setTableData(formattedActivities);
+        }
+      } catch (error) {
+        console.error('Error fetching platform activity:', error);
+      }
+    };
 
-   };
-
-
-   fetchData();
-  },[getPlatformRecentActivity])
+    fetchPlatformActivity();
+  }, [getPlatformRecentActivity]);
 
   const {
     getTableProps,
@@ -119,9 +109,8 @@ export default function TransactionTable() {
     prepareRow,
   } = useTable(
     {
-      // @ts-ignore
       columns,
-      data,
+      data: tableData,
       initialState: { pageSize: 5 },
     },
     useSortBy,
@@ -133,25 +122,42 @@ export default function TransactionTable() {
   const { pageIndex } = state;
 
   return (
-    <div className="bg-gray-900">
-      <div className="rounded-tl-lg rounded-tr-lg bg-white px-4 pt-6 dark:bg-light-dark md:px-8 md:pt-8">
-        <div className="flex flex-col items-center justify-between border-b border-dashed border-gray-200 pb-5 dark:border-gray-700 md:flex-row">
-          <h2 className="mb-3 shrink-0 text-lg font-medium uppercase text-black dark:text-white sm:text-xl md:mb-0 md:text-2xl">
-            Platform recent activity
+    <div className="bg-gray-900 p-6 rounded-lg shadow-md">
+      <div className="rounded-t-lg bg-white px-6 py-4 shadow-lg dark:bg-light-dark">
+        <div className="flex justify-between items-center border-b border-gray-300 pb-3 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-black dark:text-white">
+            Platform Recent Activity
           </h2>
         </div>
       </div>
-      <div className="-mx-0.5 dark:[&_.os-scrollbar_.os-scrollbar-track_.os-scrollbar-handle:before]:!bg-white/50">
+
+      <div className="my-6 overflow-hidden rounded-lg bg-white shadow-lg dark:bg-light-dark">
         <Scrollbar style={{ width: '100%' }} autoHide="never">
-          <div className="px-0.5">
+          <div className="min-w-full">
             <table
               {...getTableProps()}
-              className="transaction-table w-full border-separate border-0"
+              className="table-auto w-full text-left border-separate border-spacing-0"
             >
-         
+              <thead>
+                {headerGroups.map((headerGroup) => (
+                  <tr
+                    {...headerGroup.getHeaderGroupProps()}
+                    className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                  >
+                    {headerGroup.headers.map((column) => (
+                      <th
+                        {...column.getHeaderProps()}
+                        className="px-4 py-2 text-sm font-semibold"
+                      >
+                        {column.render('Header')}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
               <tbody
                 {...getTableBodyProps()}
-                className="text-xs font-medium text-gray-900 dark:text-white 3xl:text-sm"
+                className="text-gray-800 dark:text-gray-200"
               >
                 {page.map((row, idx) => {
                   prepareRow(row);
@@ -159,19 +165,17 @@ export default function TransactionTable() {
                     <tr
                       {...row.getRowProps()}
                       key={idx}
-                      className="mb-3 items-center rounded-lg bg-white uppercase shadow-card last:mb-0 dark:bg-light-dark"
+                      className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
                     >
-                      {row.cells.map((cell, idx) => {
-                        return (
-                          <td
-                            {...cell.getCellProps()}
-                            key={idx}
-                            className="px-2 py-4 tracking-[1px] ltr:first:pl-4 ltr:last:pr-4 rtl:first:pr-8 rtl:last:pl-8 md:px-4 md:py-6 md:ltr:first:pl-8 md:ltr:last:pr-8 3xl:py-5"
-                          >
-                            {cell.render('Cell')}
-                          </td>
-                        );
-                      })}
+                      {row.cells.map((cell, idx) => (
+                        <td
+                          {...cell.getCellProps()}
+                          key={idx}
+                          className="px-4 py-3 text-sm"
+                        >
+                          {cell.render('Cell')}
+                        </td>
+                      ))}
                     </tr>
                   );
                 })}
@@ -180,37 +184,33 @@ export default function TransactionTable() {
           </div>
         </Scrollbar>
       </div>
-      <div className="mt-3 flex items-center justify-center rounded-lg bg-white px-5 py-4 text-sm shadow-card dark:bg-light-dark lg:py-6">
-        <div className="flex items-center gap-5">
-          <Button
-            onClick={() => previousPage()}
-            disabled={!canPreviousPage}
-            title="Previous"
-            shape="circle"
-            variant="transparent"
-            size="small"
-            className="text-gray-700 disabled:text-gray-400 dark:text-white disabled:dark:text-gray-400"
-          >
-            <LongArrowLeft className="h-auto w-4 rtl:rotate-180" />
-          </Button>
-          <div>
-            Page{' '}
-            <strong className="font-semibold">
-              {pageIndex + 1} of {pageOptions.length}
-            </strong>{' '}
-          </div>
-          <Button
-            onClick={() => nextPage()}
-            disabled={!canNextPage}
-            title="Next"
-            shape="circle"
-            variant="transparent"
-            size="small"
-            className="text-gray-700 disabled:text-gray-400 dark:text-white disabled:dark:text-gray-400"
-          >
-            <LongArrowRight className="h-auto w-4 rtl:rotate-180 " />
-          </Button>
+
+      <div className="flex justify-center mt-4">
+        <Button
+          onClick={() => previousPage()}
+          disabled={!canPreviousPage}
+          title="Previous"
+          shape="circle"
+          variant="transparent"
+          size="small"
+          className="mr-4 text-gray-700 disabled:text-gray-400 dark:text-white disabled:dark:text-gray-400"
+        >
+          <LongArrowLeft className="h-auto w-4 rtl:rotate-180" />
+        </Button>
+        <div className="text-sm text-gray-700 dark:text-gray-300">
+          Page <strong>{pageIndex + 1}</strong> of <strong>{pageOptions.length}</strong>
         </div>
+        <Button
+          onClick={() => nextPage()}
+          disabled={!canNextPage}
+          title="Next"
+          shape="circle"
+          variant="transparent"
+          size="small"
+          className="ml-4 text-gray-700 disabled:text-gray-400 dark:text-white disabled:dark:text-gray-400"
+        >
+          <LongArrowRight className="h-auto w-4 rtl:rotate-180" />
+        </Button>
       </div>
     </div>
   );
