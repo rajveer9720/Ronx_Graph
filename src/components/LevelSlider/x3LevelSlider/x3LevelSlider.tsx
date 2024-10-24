@@ -211,6 +211,28 @@ const LevelSlider: React.FC = () => {
   const totalRevenue = cyclesContribution + partnerContribution;
   console.log("total totalRevenue:" + totalRevenue);
 
+// all level TotalRevenue store in DataTotalRevenue in console log in print
+const DataTotalRevenue = levels.map((level, index) => {
+  const cyclesContribution = cyclesData[index] ? cyclesData[index] * 2 * level.cost : 0; // Calculate cycles contribution for each level
+  const partnerContribution = currentPartner[index] ? currentPartner[index] * level.cost : 0; // Calculate partner contribution for each level
+  const totalRevenue = cyclesContribution + partnerContribution; // Total revenue for the current level
+  return totalRevenue; // Store the total revenue in the array
+});
+
+
+// Log total revenue for each level
+DataTotalRevenue.forEach((revenue, index) => {
+  console.log(`Total revenue for level ${index + 1}: ${revenue}`);
+});
+
+// Calculate the overall total revenue
+const overallTotalRevenue = DataTotalRevenue.reduce((acc, curr) => acc + curr, 0);
+
+// Log the array of total revenues
+console.log("Total revenue for all levels:", DataTotalRevenue);
+
+// Log the overall total revenue
+console.log(`Overall total revenue: ${overallTotalRevenue}`);
   // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
