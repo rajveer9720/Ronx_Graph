@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
+
+import { useRouter,useSearchParams } from 'next/navigation';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 interface StatCardProps {
   title: string;
@@ -18,8 +20,14 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
 };
 
 const Dashboard: React.FC = () => {
-  const { users } = useSmartContract();
-  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Replace with dynamic address if needed
+  const { users,getUserIdsWalletaddress } = useSmartContract();
+
+  const searchParams = useSearchParams();
+
+  const userId = searchParams.get('userId'); // Extract userId from query parameters
+  console.log("user id:",userId);
+  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
   const [userData, setUserData] = useState<{
     id: number;
     referrer: string;
@@ -27,6 +35,31 @@ const Dashboard: React.FC = () => {
     registrationTime: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+
+
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (userId) {
+        try {
+          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
+          if (walletAddress) {
+            console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
+            setUserAddress(walletAddress); // Set the fetched wallet address
+          }
+        } catch (error) {
+          console.error("Error fetching wallet address for userId:", error);
+          setUserAddress(staticAddress); // Use static address if fetching fails
+        }
+      } else {
+        // If no userId, use static wallet address
+        setUserAddress(staticAddress);
+      }
+    };
+
+    fetchUserAddress();
+  }, [userId, getUserIdsWalletaddress]);
+
 
   // Fetch user data
   const handleFetchUser = async () => {
