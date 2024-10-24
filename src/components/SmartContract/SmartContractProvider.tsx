@@ -18,7 +18,7 @@ interface SmartContractContextType {
   getPartnerCount: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getUserRecentActivityUserMatrics: (timesteamp:number, uint: string) => Promise<number | null>;
-  
+  getTeamSizeData: (userAddress: string) => Promise<number | null>;
   getPlatformRecentActivity: ()=> Promise<number |null>;
   getUserIdsWalletaddress: (userid: number) => Promise<number | null>;
 
@@ -197,6 +197,26 @@ const getUserIdsWalletaddress = async (userId: number) => {
     return null;
   }
 };
+
+//Get Team Size data fetch useing wallet Address
+const getTeamSizeData = async (userAddress: string) => {
+  if(!contract) return null;
+
+  try{
+
+    //call Smart Contract method to get user wallet address through team size that user fetch  
+    const result = await contract.getTeamSize(userAddress);
+    return result;
+
+  }catch(error){
+    console.error("error Message in wallet address not found error:",error);
+    return null;
+  }
+
+
+
+};
+
   return (
     <SmartContractContext.Provider
       value={{
@@ -212,6 +232,7 @@ const getUserIdsWalletaddress = async (userId: number) => {
         getUserRecentActivityUserMatrics,
         getPlatformRecentActivity,
         getUserIdsWalletaddress,
+        getTeamSizeData,
         provider,
       }}
     >

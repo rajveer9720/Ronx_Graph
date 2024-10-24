@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
-import { useRouter,useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 interface StatCardProps {
@@ -20,46 +19,57 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
 };
 
 const Dashboard: React.FC = () => {
-  const { users,getUserIdsWalletaddress } = useSmartContract();
+  const { users, getUserIdsWalletaddress, getTeamSizeData } = useSmartContract();
 
   const searchParams = useSearchParams();
-
   const userId = searchParams.get('userId'); // Extract userId from query parameters
-  console.log("user id:",userId);
-  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+
   const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+  const [userAddress, setUserAddress] = useState<string>(staticAddress); // Initially static address, will set to fetched address
   const [userData, setUserData] = useState<{
     id: number;
     referrer: string;
     partnersCount: number;
     registrationTime: number;
   } | null>(null);
+  const [teamSize, setTeamSize] = useState<string>(''); // Store team size
   const [error, setError] = useState<string | null>(null);
 
-
-
+  // Fetch wallet address based on userId
   useEffect(() => {
     const fetchUserAddress = async () => {
       if (userId) {
         try {
-          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
+          const walletAddress = await getUserIdsWalletaddress(Number(userId));
           if (walletAddress) {
-            console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
-            setUserAddress(walletAddress); // Set the fetched wallet address
+            setUserAddress(walletAddress);
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(staticAddress); // Use static address if fetching fails
+          setUserAddress(staticAddress); // Fallback to static address if fetching fails
         }
-      } else {
-        // If no userId, use static wallet address
-        setUserAddress(staticAddress);
       }
     };
 
     fetchUserAddress();
   }, [userId, getUserIdsWalletaddress]);
 
+  // Fetch team size data after fetching the user address
+  useEffect(() => {
+    const fetchTeamSize = async () => {
+      if (userAddress) {
+        try {
+          const fetchedTeamSize = await getTeamSizeData(userAddress);
+          setTeamSize(fetchedTeamSize?.toString() || '0'); // Fallback to 0 if data is unavailable
+        } catch (error) {
+          console.error("Error fetching team size data:", error);
+          setTeamSize('0'); // Fallback to 0 if fetching fails
+        }
+      }
+    };
+
+    fetchTeamSize();
+  }, [userAddress, getTeamSizeData]);
 
   // Fetch user data
   const handleFetchUser = async () => {
@@ -69,7 +79,7 @@ const Dashboard: React.FC = () => {
         setUserData(data);
         setError(null); // Clear error if successful
       } else {
-        setError(".");
+        setError("Failed to fetch user data.");
       }
     } catch (err) {
       console.error("Error fetching user data:", err);
@@ -79,7 +89,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     handleFetchUser();
-  }, [users, userAddress]);
+  }, [userAddress, users]);
 
   return (
     <div className="my-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full mx-auto text-center items-center">
@@ -90,7 +100,7 @@ const Dashboard: React.FC = () => {
             value={userData.partnersCount.toString()}
             increase="↑ 0"
           />
-          <StatCard title="Team" value="21" increase="↑ 0" />
+          <StatCard title="Team" value={teamSize} increase="↑ 0" />
           <StatCard title="Ratio" value="209%" increase="↑ 0%" />
           <StatCard title="Profits" value="3,891" increase="↑ 0\n↑ 0" />
         </>

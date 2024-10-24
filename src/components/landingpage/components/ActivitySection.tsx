@@ -111,7 +111,7 @@ const ActivitySection: React.FC = () => {
             <p>All data is stored in the blockchain in the public domain and can be verified!<br />
               Contract address eth: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97<br />
               Contract address tron: TREbha3Jj6TrpT7e6Z5ukh3NRhyxHsmMug<br />
-              Contract address busd: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97
+              Contract address busd: 0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-around">
               <div className="mb-6 sm:mb-0">
