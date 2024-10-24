@@ -14,8 +14,6 @@ const Program: React.FC = () => {
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
 
-  console.log("User id:", userId);
-
   const { usersActiveX3Levels, usersActiveX4Levels, getUserIdsWalletaddress } = useSmartContract();
   const [activeProgram, setActiveProgram] = useState<string | null>(null);
   const [activeLevelsX3, setActiveLevelsX3] = useState<boolean[]>(Array(12).fill(false));
@@ -80,12 +78,14 @@ const Program: React.FC = () => {
   };
 
   const handleRegisterBUSD = (name: string) => {
+    const userIdParam = userId ? `?userId=${userId}` : ''; // Append userId if it exists
     if (name === 'x3') {
-      router.push('/retro/program/x3'); // Path for x3 program
+      router.push(`/retro/program/x3${userIdParam}`); // Path for x3 program
     } else if (name === 'x4') {
-      router.push('/retro/program/x4'); // Path for x4 program
+      router.push(`/retro/program/x4${userIdParam}`); // Path for x4 program
     }
   };
+  
 
   const renderGridItems = (activeLevels: boolean[], programName: string) => {
     return activeLevels.map((isActive, index) => (

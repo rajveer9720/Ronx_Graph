@@ -1,7 +1,9 @@
 // src/components/LevelCard/LevelCard.tsx
 'use client';
+import { useEffect, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 interface LevelCardProps {
   level: number;
@@ -13,9 +15,44 @@ interface LevelCardProps {
 
 const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount }) => {
   const router = useRouter();
+  const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
+
+  const searchParams = useSearchParams();
+
+  const userId = searchParams.get('userId'); // Extract userId from query parameters
+  console.log("user id:",userId);
+  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+   // Fetch user wallet address if userId is provided, else use static address
+   useEffect(() => {
+    const fetchUserAddress = async () => {
+      if (userId) {
+        try {
+          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
+          if (walletAddress) {
+            console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
+            setUserAddress(walletAddress); // Set the fetched wallet address
+          }
+        } catch (error) {
+          console.error("Error fetching wallet address for userId:", error);
+          setUserAddress(staticAddress); // Use static address if fetching fails
+        }
+      } else {
+        // If no userId, use static wallet address
+        setUserAddress(staticAddress);
+      }
+    };
+
+    fetchUserAddress();
+  }, [userId, getUserIdsWalletaddress]);
+
+
+
 
   const handleClick = () => {
-    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
+    const userIdParam = userId ? `&userId=${userId}` : ''; // Append userId if it exists
+
+    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}${userIdParam}`);
   };
 
   // Generate partner circles with conditional coloring

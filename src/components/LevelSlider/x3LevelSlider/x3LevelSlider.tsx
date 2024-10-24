@@ -24,9 +24,12 @@ const levels = [
 
 const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
+  const userId = searchParams.get('userId'); // Extract userId from query parameters
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
-  const { getTotalCycles, userX3Matrix, getPartnerCount, users } = useSmartContract();
+  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+
+  const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress,users } = useSmartContract();
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
@@ -39,7 +42,7 @@ const LevelSlider: React.FC = () => {
     registrationTime: number;
   } | null>(null);
 
-  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
 
   const [userData, setUserData] = useState<{
@@ -50,6 +53,31 @@ const LevelSlider: React.FC = () => {
   } | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+
+
+
+    // Fetch user wallet address if userId is provided, else use static address
+    useEffect(() => {
+      const fetchUserAddress = async () => {
+        if (userId) {
+          try {
+            const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
+            if (walletAddress) {
+              console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
+              setUserAddress(walletAddress); // Set the fetched wallet address
+            }
+          } catch (error) {
+            console.error("Error fetching wallet address for userId:", error);
+            setUserAddress(staticAddress); // Use static address if fetching fails
+          }
+        } else {
+          // If no userId, use static wallet address
+          setUserAddress(staticAddress);
+        }
+      };
+  
+      fetchUserAddress();
+    }, [userId, getUserIdsWalletaddress]);
 
   // Fetch current user data
   const handleFetchUser = async () => {
