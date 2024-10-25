@@ -1,12 +1,16 @@
 // src/app/retro/program/x4/page.tsx
 
-import { useEffect, useState,Suspense  } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import X4Grid from '@/components/LevelCard/x4Card/X4Grid';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+
+const X4Grid = dynamic(() => import('@/components/LevelCard/x4Card/X4Grid'), { ssr: false });
 
 export default function X4Page() {
   return (
     <div>
-      <X4Grid />
-    </div>);
+      <Suspense fallback={<div>Loading...</div>}>
+        <X4Grid />
+      </Suspense>
+    </div>
+  );
 }

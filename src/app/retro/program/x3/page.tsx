@@ -1,14 +1,17 @@
 // src/app/retro/program/x3/page.tsx
 
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 
-import { useEffect, useState,Suspense  } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import X3Grid from '@/components/LevelCard/x3Card/X3Grid'; // Assuming X3Grid is the correct import
+// Dynamic import to prevent SSR issues
+const X3Grid = dynamic(() => import('@/components/LevelCard/x3Card/X3Grid'), { ssr: false });
 
 export default function X3Page() {
   return (
     <div>
-      <X3Grid />
+      <Suspense fallback={<div>Loading...</div>}>
+        <X3Grid />
+      </Suspense>
     </div>
   );
 }
