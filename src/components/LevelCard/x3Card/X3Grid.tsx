@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState ,Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
@@ -92,6 +92,8 @@ const X3Grid: React.FC = () => {
   }, [userAddress, getTotalCycles, userX3Matrix, getPartnerCount]);
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
+
     <div className="p-5 min-h-screen text-white">
       <div className="container mx-auto">
         <h1 className="text-3xl font-bold mb-5">Ronx x3</h1>
@@ -110,6 +112,8 @@ const X3Grid: React.FC = () => {
       </div>
       <NotifyBot />
     </div>
+    </Suspense>
+
   );
 };
 

@@ -1,6 +1,6 @@
 'use client'; // Ensure client-side rendering
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,Suspense  } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
 import LevelHeader from '@/components/levelheader/x4levelheader/x4levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
@@ -202,7 +202,8 @@ const LevelSlider: React.FC = () => {
   const totalRevenue = cyclesContribution + partnerContribution;
 
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
+
       <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id}  />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
@@ -283,7 +284,8 @@ const LevelSlider: React.FC = () => {
       </div>
       <TransactionTable />
       <NotifyBot />
-    </>
+      </Suspense>
+
   );
 };
 

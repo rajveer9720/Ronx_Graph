@@ -1,6 +1,6 @@
 // src/components/LevelCard/LevelCard.tsx
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense  } from 'react';
 
 import { useRouter,useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
@@ -72,6 +72,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
+
     <div
       className="bg-blue-700 p-4 rounded-lg text-center border border-gray-600 relative cursor-pointer"
       onClick={handleClick}
@@ -92,6 +94,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
         </div>
       </div>
     </div>
+    </Suspense>
+
   );
 };
 

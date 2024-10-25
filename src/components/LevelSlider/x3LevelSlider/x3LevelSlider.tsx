@@ -1,6 +1,6 @@
 'use client'; // Ensure client-side rendering
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
 import LevelHeader from '@/components/levelheader/x3levelheader/x3levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';

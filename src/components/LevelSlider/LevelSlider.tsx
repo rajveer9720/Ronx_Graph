@@ -167,7 +167,8 @@ const LevelSlider: React.FC = () => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
+  
+      <LevelHeader  userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}

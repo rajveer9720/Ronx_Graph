@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState,Suspense  } from 'react';
 
 import { useRouter,useSearchParams } from 'next/navigation';
 import { FaUsers, FaSyncAlt, FaCoins } from 'react-icons/fa'; // FontAwesome for icons
@@ -92,6 +92,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
     );
   };
   return (
+    <Suspense fallback={<div>Loading...</div>}>
+
     <div
       className="bg-blue-600 p-4 rounded-lg text-white text-center border border-blue-500 shadow-lg relative cursor-pointer hover:shadow-xl transition-shadow duration-300"
       onClick={handleClick}
@@ -115,6 +117,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
         </div>
       </div>
     </div>
+    </Suspense>
+
   );
 };
 export default LevelCard;
