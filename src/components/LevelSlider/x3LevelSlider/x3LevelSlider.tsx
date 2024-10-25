@@ -236,7 +236,7 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
   // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
-      <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
+       <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
