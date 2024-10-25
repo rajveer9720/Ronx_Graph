@@ -92,9 +92,10 @@ const X3Grid: React.FC = () => {
   }, [userAddress, getTotalCycles, userX3Matrix, getPartnerCount]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
 
     <div className="p-5 min-h-screen text-white">
+          <Suspense fallback={<div>Loading...</div>}>
+
       <div className="container mx-auto">
         <h1 className="text-3xl font-bold mb-5">Ronx x3</h1>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
@@ -111,8 +112,9 @@ const X3Grid: React.FC = () => {
         </div>
       </div>
       <NotifyBot />
+      </Suspense>
     </div>
-    </Suspense>
+    
 
   );
 };
