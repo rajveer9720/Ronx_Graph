@@ -322,5 +322,5 @@ const totalRevenue = totalRevenueX3 + totalRevenueX4;
     </div>
   );
 };
-
 export default Dashboard;
+
