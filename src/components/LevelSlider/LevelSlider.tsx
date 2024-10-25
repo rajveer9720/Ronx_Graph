@@ -166,7 +166,7 @@ const LevelSlider: React.FC = () => {
   const totalRevenue = cyclesContribution + partnerContribution;
 
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
