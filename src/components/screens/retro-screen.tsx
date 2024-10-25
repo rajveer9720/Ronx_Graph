@@ -1,4 +1,7 @@
 "use client"
+
+import React, { useEffect, useState,Suspense  } from 'react';
+
 import TransactionTable from '@/components/transaction/transaction-table';
 import Program from '@/components/program/program';
 import Dashboard from '@/components/dashboard/dashboard';
@@ -12,7 +15,8 @@ import Profile from '@/components/profile/profile';
 import Avatar from '@/components/ui/avatar';
 export default function RetroScreen() {
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
+
     <div className="relative h-36 w-full overflow-hidden rounded-lg sm:h-44 md:h-64 xl:h-80 2xl:h-96 3xl:h-[448px]">
       <Image
         src={authorData?.cover_image?.thumbnail}
@@ -35,6 +39,7 @@ export default function RetroScreen() {
 
     <Program />
     <TransactionTable />
-  </>
+    </Suspense>
+
   );
 }
