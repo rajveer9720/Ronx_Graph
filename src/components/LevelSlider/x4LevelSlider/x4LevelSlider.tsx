@@ -22,7 +22,7 @@ const levels = [
   { level: 12, cost: 9900 },
 ];
 
-const LevelSlider: React.FC = () => {
+const LevelSliderx4: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
@@ -289,4 +289,4 @@ const LevelSlider: React.FC = () => {
   );
 };
 
-export default LevelSlider;
+export default LevelSliderx4;

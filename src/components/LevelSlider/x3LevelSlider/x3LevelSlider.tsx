@@ -22,7 +22,7 @@ const levels = [
   { level: 12, cost: 9900 },
 ];
 
-const LevelSlider: React.FC = () => {
+const LevelSliderx3: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
@@ -307,4 +307,4 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
   );
 };
 
-export default LevelSlider;
+export default LevelSliderx3;
