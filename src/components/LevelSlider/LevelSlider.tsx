@@ -1,4 +1,3 @@
-'use client'; // Ensure client-side rendering
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation'; // Import useSearchParams to access URL parameters
@@ -186,7 +185,7 @@ const LevelSlider: React.FC = () => {
   // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
-      <LevelHeader level={currentLevel} uplineId={uplineuserData?.id} />
+      <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
