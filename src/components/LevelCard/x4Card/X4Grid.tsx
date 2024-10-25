@@ -124,7 +124,7 @@ const X4Grid: React.FC = () => {
       </div>
       <NotifyBot />
     </div>
-    </Suspense>
+        </Suspense>
 
   );
 };
