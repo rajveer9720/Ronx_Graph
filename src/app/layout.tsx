@@ -9,6 +9,7 @@ import ModalsContainer from '@/components/modal-views/container';
 import DrawersContainer from '@/components/drawer-views/container';
 import SettingsButton from '@/components/settings/settings-button';
 import SettingsDrawer from '@/components/settings/settings-drawer';
+import { WalletProvider } from '@/app/context/WalletContext';
 // Import the SmartContractProvider
 import { SmartContractProvider } from '@/components/SmartContract/SmartContractProvider';
 // base css file
@@ -49,6 +50,7 @@ export default function RootLayout({
         <QueryClientProvider>
           <ThemeProvider>
             <WagmiConfig>
+              <WalletProvider>
               <SmartContractProvider> {/* Add SmartContractProvider here */}
                 <SettingsButton />
                 <SettingsDrawer />
@@ -58,6 +60,7 @@ export default function RootLayout({
                 </Suspense>
                 {children}
               </SmartContractProvider>
+              </WalletProvider>
             </WagmiConfig>
           </ThemeProvider>
         </QueryClientProvider>

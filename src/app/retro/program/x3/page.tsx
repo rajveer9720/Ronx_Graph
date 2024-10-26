@@ -15,3 +15,6 @@ export default function X3Page() {
     </div>
   );
 }
+
+//Data fetch in wallet connection address data fetch//:
+

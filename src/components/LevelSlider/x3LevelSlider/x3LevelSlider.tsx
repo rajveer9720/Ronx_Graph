@@ -6,6 +6,7 @@ import LevelHeader from '@/components/levelheader/x3levelheader/x3levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
+import { useWallet } from '@/app/context/WalletContext';
 
 const levels = [
   { level: 1, cost: 5 },
@@ -23,6 +24,8 @@ const levels = [
 ];
 
 const LevelSliderx3: React.FC = () => {
+  const { address } = useWallet();
+
   const searchParams = useSearchParams(); // Get search parameters from URL
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
@@ -236,7 +239,15 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
   // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
+         {address ? (
+        <p>{address}</p>
+      ) : (
+        <p>No wallet connected</p>
+      )}
        <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
+      
+      
+      
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
