@@ -7,6 +7,7 @@ import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 import { useWallet } from '@/app/context/WalletContext';
+import LevelTransection from '@/components/level_transection/level_transection';
 
 const levels = [
   { level: 1, cost: 5 },
@@ -44,6 +45,14 @@ const LevelSliderx3: React.FC = () => {
     partnersCount: number;
     registrationTime: number;
   } | null>(null);
+
+
+  console.log("address "+address+'\n partnersData '+partnersData+'\n partnerIds ' + partnerIds);
+  
+
+
+
+
 
   const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
@@ -312,7 +321,7 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
       </div>
       <div className="my-9">
         <NotifyBot />
-        <TransactionTable />
+        <LevelTransection />
       </div>
     </>
   );

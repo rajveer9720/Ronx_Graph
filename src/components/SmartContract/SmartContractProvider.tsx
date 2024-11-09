@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
 
-const CONTRACT_ADDRESS = "0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF";
+const CONTRACT_ADDRESS = "0x235E70d34EB6103226d8Dd1d843b2043226929A2";
 const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
 
 interface SmartContractContextType {
@@ -21,7 +21,7 @@ interface SmartContractContextType {
   getTeamSizeData: (userAddress: string) => Promise<number | null>;
   getPlatformRecentActivity: ()=> Promise<number |null>;
   getUserIdsWalletaddress: (userid: number) => Promise<number | null>;
-
+  getDetailedMatrixInfo: (userid: number, Matrix: number, Level: number) => Promise<number | null>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -217,6 +217,24 @@ const getTeamSizeData = async (userAddress: string) => {
 
 };
 
+//Get Team Size data fetch useing wallet Address
+const getDetailedMatrixInfo = async (userId: number, Matrix: number, Level: number) => {
+  if(!contract) return null;
+
+  try{
+
+    //call Smart Contract method to get user wallet address through team size that user fetch  
+    const result = await contract.getDetailedMatrixInfo(userId,Matrix, Level);
+    return result;
+
+  }catch(error){
+    console.error("error Message in wallet address not found error:",error);
+    return null;
+  }
+
+};
+
+
   return (
     <SmartContractContext.Provider
       value={{
@@ -233,6 +251,7 @@ const getTeamSizeData = async (userAddress: string) => {
         getPlatformRecentActivity,
         getUserIdsWalletaddress,
         getTeamSizeData,
+        getDetailedMatrixInfo,
         provider,
       }}
     >

@@ -130,7 +130,6 @@ export default function TransactionTable() {
           </h2>
         </div>
       </div>
-
       <div className="my-6 overflow-hidden rounded-lg bg-white shadow-lg dark:bg-light-dark">
         <Scrollbar style={{ width: '100%' }} autoHide="never">
           <div className="min-w-full">
