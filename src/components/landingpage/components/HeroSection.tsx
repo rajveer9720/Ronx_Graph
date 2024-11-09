@@ -49,7 +49,7 @@ const HeroSection: React.FC = () => {
             <Image src={Logo} alt="Criptic" height={45} priority />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold">Ronx BUSD</h1>
-          <p>{data ? data.toString() : 'No data fetched yet'}</p>
+          {/* <p>{data ? data.toString() : 'No data fetched yet'}</p> */}
         </div>
         <p className="mb-8 w-5/6 md:w-3/4 mx-auto">
           A decentralized networking platform based on smart contracts, together with NFT technology, which brings people together from all over the world and opens up endless possibilities for new economic financial systems.
@@ -61,13 +61,7 @@ const HeroSection: React.FC = () => {
           Registration
         </button>
 
-        {/* New Button to Fetch Data */}
-        <button
-          className="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-full mb-8"
-          onClick={handleFetchData}
-        >
-          Fetch Data
-        </button>
+        
 
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-1 gap-8">
           <div className="p-8 bg-gray-800 rounded-lg shadow-lg">

@@ -9,7 +9,7 @@ import RegistrationSection from './components/RegistrationSection';
 import FAQSection from './components/FAQSection';
 import Footer from './components/Footer';
 import SmartContractComponent from '../SmartContract/SmartContractData';
-import ConnectWallet from '../connectWallets/ConnectWallet';
+
 export default function LandingPage() {
     const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
 
@@ -25,7 +25,7 @@ export default function LandingPage() {
         <div className="App">
             <Header onRegistrationClick={handleRegistrationClick} />
             <SmartContractComponent />
-            <ConnectWallet />
+            
 
             {/* Conditionally render the registration section */}
             {isRegistrationOpen && <RegistrationSection onClose={handleCloseRegistration} />}

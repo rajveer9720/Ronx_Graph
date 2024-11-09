@@ -31,8 +31,8 @@ const LevelSliderx3: React.FC = () => {
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-
-  const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress,users } = useSmartContract();
+  const [matrixInfo, setMatrixInfo] = useState([]);
+  const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress,users,getDetailsMatrixdata } = useSmartContract();
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
@@ -45,7 +45,7 @@ const LevelSliderx3: React.FC = () => {
     registrationTime: number;
   } | null>(null);
 
-  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const staticAddress = '0x7f8fc3385a1763Fdab015Ad7e778223099E95b80';
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
 
   const [userData, setUserData] = useState<{
@@ -139,6 +139,17 @@ const LevelSliderx3: React.FC = () => {
             return partnerCount || 0;
           })
         );
+        //this function in fetch getDetailsMatrixInfo data fetch and display
+        const info = await Promise.all(
+          levels.map(async (level) => {
+            const data = await getDetailsMatrixdata(1, 1, 1);
+            console.log("Matrix Data:",data?.toString());
+            return 0;
+          })
+        );
+        //smart contact data fetch in display
+        setMatrixInfo(info.flat());
+
 
         const fetchUserIdByAddress = async (partnerAddress: string) => {
           try {

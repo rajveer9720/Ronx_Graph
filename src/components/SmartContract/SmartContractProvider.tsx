@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
+const CONTRACT_ADDRESS = "0x235E70d34EB6103226d8Dd1d843b2043226929A2";
+const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c";
 
-const CONTRACT_ADDRESS = "0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF";
-const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
 
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;
@@ -17,11 +17,11 @@ interface SmartContractContextType {
   userX4Matrix: (userAddress: string, level: number) => Promise<number | null>;
   getPartnerCount: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
-  getUserRecentActivityUserMatrics: (timesteamp:number, uint: string) => Promise<number | null>;
+  getUserRecentActivityUserMatrics: (timesteamp: number, uint: string) => Promise<number | null>;
   getTeamSizeData: (userAddress: string) => Promise<number | null>;
-  getPlatformRecentActivity: ()=> Promise<number |null>;
+  getPlatformRecentActivity: () => Promise<number | null>;
   getUserIdsWalletaddress: (userid: number) => Promise<number | null>;
-
+  getDetailsMatrixdata: (userid: number, matrix: number, level: number) => Promise<number | null>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -161,10 +161,10 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   //last 24 hourse fetch recent activity in user register and buy new level that relate data fetch
-  const getUserRecentActivityUserMatrics = async (timestemp: number ,uint: string) => {
+  const getUserRecentActivityUserMatrics = async (timestemp: number, uint: string) => {
     if (!contract) return null;
     try {
-      const result = await contract.getUserRegistrationMetrics(timestemp,uint);
+      const result = await contract.getUserRegistrationMetrics(timestemp, uint);
       return result; // Return relevant data
     } catch (error) {
       console.error("Error fetching user recent activity:", error);
@@ -186,36 +186,65 @@ export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({
 
 
   // Function to fetch wallet address using userId
-const getUserIdsWalletaddress = async (userId: number) => {
-  if (!contract) return null;
-  try {
-    // Call smart contract method to get the wallet address by userId
-    const address = await contract.userIds(userId);
-    return address;  // Address will be returned as a single value
-  } catch (error) {
-    console.error("Error fetching user wallet address through userId:", error);
-    return null;
-  }
-};
+  const getUserIdsWalletaddress = async (userId: number) => {
+    if (!contract) return null;
+    try {
+      // Call smart contract method to get the wallet address by userId
+      const address = await contract.userIds(userId);
+      return address;  // Address will be returned as a single value
+    } catch (error) {
+      console.error("Error fetching user wallet address through userId:", error);
+      return null;
+    }
+  };
 
-//Get Team Size data fetch useing wallet Address
-const getTeamSizeData = async (userAddress: string) => {
-  if(!contract) return null;
+  //Get Team Size data fetch useing wallet Address
+  const getTeamSizeData = async (userAddress: string) => {
+    if (!contract) return null;
 
-  try{
+    try {
 
-    //call Smart Contract method to get user wallet address through team size that user fetch  
-    const result = await contract.getTeamSize(userAddress);
-    return result;
+      //call Smart Contract method to get user wallet address through team size that user fetch  
+      const result = await contract.getTeamSize(userAddress);
+      return result;
 
-  }catch(error){
-    console.error("error Message in wallet address not found error:",error);
-    return null;
-  }
+    } catch (error) {
+      console.error("error Message in wallet address not found error:", error);
+      return null;
+    }
 
 
 
-};
+  };
+
+  //GetDetailsMatrixDatafetch and display accoding level ways
+  const getDetailsMatrixdata = async (userid: number, matrix: number, level: number) => {
+    if (!contract) return null;
+    try {
+      const result = await contract.getDetailedMatrixInfo(userid, matrix, level);
+
+      console.log("Fetched data:", result);
+      // Format each tuple into a structured object
+      const formattedData = result.map((tuple: any) => ({
+        id: tuple[0],
+        address: tuple[1],
+        timestamp: tuple[2],
+        matrixId: tuple[3],
+        levelId: tuple[4],
+        status: tuple[5],
+        recycleCount: tuple[6],
+        amount: tuple[7],
+      }));
+
+      formattedData.forEach((data, index) => { console.log(`Data Entry ${index + 1}:`, data); });
+
+      return formattedData;
+    } catch (error) {
+      console.error("Error fetching platform recent activity:", error);
+      return null;
+    }
+  };
+
 
   return (
     <SmartContractContext.Provider
@@ -233,6 +262,7 @@ const getTeamSizeData = async (userAddress: string) => {
         getPlatformRecentActivity,
         getUserIdsWalletaddress,
         getTeamSizeData,
+        getDetailsMatrixdata,
         provider,
       }}
     >

@@ -108,11 +108,11 @@ const ActivitySection: React.FC = () => {
           </div>
           <div className="text-center text-white mt-10">
             <h2 className="text-3xl font-bold mb-4">Partner Results</h2>
-            <p>All data is stored in the blockchain in the public domain and can be verified!<br />
+            {/* <p>All data is stored in the blockchain in the public domain and can be verified!<br />
               Contract address eth: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97<br />
               Contract address tron: TREbha3Jj6TrpT7e6Z5ukh3NRhyxHsmMug<br />
               Contract address busd: 0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF
-            </p>
+            </p> */}
             <div className="mt-8 flex flex-col sm:flex-row justify-around">
               <div className="mb-6 sm:mb-0">
                 <span>Member Total</span>

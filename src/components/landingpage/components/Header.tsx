@@ -7,6 +7,7 @@ import { Box, Button, Flex, Link, Text, useDisclosure } from '@chakra-ui/react';
 import Image from '@/components/ui/image';
 import darkLogo from '@/assets/images/logo-white.svg';
 import ConnectWallet from './ConnectWallet'; // Import the new component
+import WalletConnect from '@/components/nft/wallet-connect';
 
 interface HeaderProps {
     onRegistrationClick: () => void;
@@ -52,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ onRegistrationClick }) => {
                 className="space-x-4"
             >
                 <Link href="#documentation" color="white" _hover={{ color: 'gray.400' }}>Documentation</Link>
-                <Link href="#login" color="white" _hover={{ color: 'gray.400' }}>Login</Link>
+                {/* <Link href="#login" color="white" _hover={{ color: 'gray.400' }}>Login</Link> */}
                 <Link href="#register" onClick={(e) => { e.preventDefault(); onRegistrationClick(); }} color="white" _hover={{ color: 'gray.400' }}>
                     Registration
                 </Link>
@@ -62,10 +63,9 @@ const Header: React.FC<HeaderProps> = ({ onRegistrationClick }) => {
                 <Text color="white">Accrual 5.12%</Text>
                 <Text color="white">Annual Rate 5.05%</Text>
             </Flex>
-            <ConnectWallet onConnect={handleConnect} />
+            
             <Flex direction="column" align="center">
-                <Text color="white">Address: {walletData.address || "Not connected"}</Text>
-                <Text color="white">Balance: {walletData.balance !== null ? walletData.balance : "Not retrieved"}</Text>
+            <WalletConnect />
             </Flex>
         </header>
     );
