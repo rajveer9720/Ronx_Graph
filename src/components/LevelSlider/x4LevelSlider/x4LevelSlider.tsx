@@ -6,7 +6,7 @@ import LevelHeader from '@/components/levelheader/x4levelheader/x4levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
-
+import LevelTransection from '@/components/level_transection/level_transection';
 const levels = [
   { level: 1, cost: 5 },
   { level: 2, cost: 10 },
@@ -282,7 +282,7 @@ const LevelSliderx4: React.FC = () => {
           {currentLevel < 12 ? currentLevel + 1 : ''}
         </button>
       </div>
-      <TransactionTable />
+      <LevelTransection />
       <NotifyBot />
       </Suspense>
 
