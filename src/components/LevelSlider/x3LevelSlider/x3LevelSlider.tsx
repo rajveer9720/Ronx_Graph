@@ -321,8 +321,8 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
       </div>
       <div className="my-9">
         <NotifyBot />
-        <LevelTransection />
-      </div>
+        <LevelTransection matrix={1} currentLevel={currentLevel} /> {/* Pass currentLevel to LevelTransection */}
+        </div>
     </>
   );
 };

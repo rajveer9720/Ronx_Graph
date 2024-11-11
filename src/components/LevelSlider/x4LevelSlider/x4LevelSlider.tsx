@@ -233,7 +233,9 @@ const LevelSliderx4: React.FC = () => {
                           }`}
                       >
                         <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">
-                          {partnerIdsLayer1[currentLevel - 1][i] || 'N/A'}
+                        
+                          {/* blank space if you want show any sport in image and icon show in black */}
+                          {partnerIdsLayer1[currentLevel - 1][i] || ' '}
                         </span>
                       </div>
                     </div>
@@ -249,7 +251,9 @@ const LevelSliderx4: React.FC = () => {
                           }`}
                       >
                         <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">
-                          {partnerIdsLayer2[currentLevel - 1][i] || 'N/A'}
+                      {/* blank space if you want show any sport in image and icon show in black */}
+
+                          {partnerIdsLayer2[currentLevel - 1][i] || ' '}
                         </span>
                       </div>
                     </div>
@@ -282,8 +286,10 @@ const LevelSliderx4: React.FC = () => {
           {currentLevel < 12 ? currentLevel + 1 : ''}
         </button>
       </div>
-      <LevelTransection />
+    
+
       <NotifyBot />
+      <LevelTransection matrix={2} currentLevel={currentLevel} /> {/* Pass currentLevel to LevelTransection */}
       </Suspense>
 
   );
