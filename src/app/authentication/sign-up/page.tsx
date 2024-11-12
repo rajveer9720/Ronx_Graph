@@ -1,47 +1,65 @@
+import React from 'react';
 import Logo from '@/components/ui/logo';
 import Image from '@/components/ui/image';
 import SignUpForm from '@/components/auth/sign-up-form';
 import AnchorLink from '@/components/ui/links/anchor-link';
-
-// import images and icons
 import BitcoinImg from '@/assets/images/bit-coin.png';
 import GoogleIcon from '@/assets/images/google-icon.svg';
+
+import{Header} from '@/layouts/minimal/layout'
+
 import routes from '@/config/routes';
 
-export default function SignUp() {
+const SignUp: React.FC = () => {
+  
   return (
     <>
-      <div className="grid flex-grow grid-cols-1 gap-0 lg:grid-cols-[1fr_40%] 3xl:grid-cols-2">
-        <div className="flex items-center justify-center py-14">
-          <div className="grid w-full max-w-[408px] grid-cols-1 gap-4 px-4">
-            <div className="mx-auto mb-2 w-20 lg:ml-0 xl:w-24">
-              <Logo className="!w-full" />
-            </div>
-            <div className="mb-5 text-center lg:text-left">
-              <h2 className="mb-2 text-xl font-medium uppercase dark:text-white lg:text-2xl">
-                Create New Account
-              </h2>
-              <p className="text-sm text-[#4B5563] dark:text-gray-300">
-                Welcome! Lets fill information and create account
-              </p>
-            </div>
-           
-            <SignUpForm />
-            <p className="text-sm tracking-[0.5px] text-[#4B5563] dark:text-gray-300">
+      <Header />
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#0F172A] text-white">
+      {/* Left section for registration form */}
+      <div className="flex flex-col items-center justify-center w-full lg:w-3/5 p-8">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="flex justify-center lg:justify-start mb-8">
+            <Logo className="w-24" />
+          </div>
+
+          {/* Heading */}
+          <div className="text-center lg:text-left mb-6">
+            <h2 className="text-2xl font-semibold uppercase">Registration in Ronx BUSD</h2>
+            {/* <p className="text-gray-400">Welcome! Please fill in the information to create your account</p> */}
+          </div>
+
+          <SignUpForm />
+
+          
+          
+          {/* Sign Up Form */}
+        
+          
+
+          {/* Already have an account */}
+          <div className="mt-4 text-center lg:text-left">
+            <p className="text-sm text-gray-400">
               Already have an account?
-              <AnchorLink
-                href={routes.signIn}
-                className="ml-2 font-medium underline dark:text-gray-300"
-              >
-                Sign In
+              <AnchorLink href={routes.signIn} className="ml-2 font-medium underline text-blue-500">
+                Login
               </AnchorLink>
             </p>
           </div>
-        </div>
-        <div className="relative hidden bg-[#F3F4F6] lg:block">
-          <Image src={BitcoinImg} alt="sign-up" fill className="object-cover" />
+
+         
         </div>
       </div>
+
+      {/* Right section for image */}
+      <div className="hidden lg:flex items-center justify-center w-full lg:w-2/5 bg-gray-900 relative">
+        <Image src={BitcoinImg} alt="Sign Up" fill className="object-cover" />
+      </div>
+    </div>
     </>
   );
-}
+};
+
+
+export default SignUp;
