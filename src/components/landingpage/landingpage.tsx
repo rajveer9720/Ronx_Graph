@@ -25,17 +25,18 @@ export default function LandingPage() {
         <div className="App">
             <Header onRegistrationClick={handleRegistrationClick} />
             <SmartContractComponent />
-            
-
+    
             {/* Conditionally render the registration section */}
-            {isRegistrationOpen && <RegistrationSection onClose={handleCloseRegistration} />}
+            {isRegistrationOpen && (
+                <RegistrationSection onClose={handleCloseRegistration} />
+            )}
+            
             <HeroSection />
             <ActivitySection />
             <TechnologySection />
             <InfoCardsSection />
             <FAQSection />
             <Footer />
-            {/* Additional components can be added here */}
         </div>
     );
 }

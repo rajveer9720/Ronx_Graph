@@ -4,15 +4,17 @@ import { useState } from 'react';
 import Button from '@/components/ui/button/button';
 import Input from '@/components/ui/forms/input';
 import { useRouter } from 'next/navigation';
-import  WalletStatus from '@/components/walletstatus/walletstatus';
+import WalletStatus from '@/components/walletstatus/walletstatus';
 import { useWallet } from '@/app/context/WalletContext';
+
+
 export default function SignUpForm() {
   const { walletAddress, balance } = useWallet();
-
-
   const router = useRouter();
+
+  // Initialize the form data with default UplineId of '1'
   const [formData, setFormData] = useState({
-    UplineId: '',
+    UplineId: '1',
   });
 
   const [errors, setErrors] = useState({
@@ -43,15 +45,20 @@ export default function SignUpForm() {
   // Handle input changes and validate the field in real-time
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    if (name === 'UplineId' && !/^\d*$/.test(value)) return; // Allow only numbers
+
+    // Only allow numbers in the UplineId field
+    if (name === 'UplineId' && !/^\d*$/.test(value)) return;
 
     setFormData({ ...formData, [name]: value });
     validateField(name, value);
   }
 
+  // Handle form submission
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (Object.values(errors).every(x => x === '') && formData.UplineId) {
+
+    // Check if there are no validation errors and the form is filled
+    if (Object.values(errors).every((x) => x === '') && formData.UplineId) {
       console.log('Form submitted:', formData);
       router.push('/retro');
     }
@@ -59,32 +66,33 @@ export default function SignUpForm() {
 
   return (
     <>
-     
-    <form noValidate onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-3">
-        {/* Upline ID Input Field */}
-        <Input
-          name="UplineId"
-          type="text"
-          placeholder="Upline ID"
-          value={formData.UplineId}
-          onChange={handleChange}
-          inputClassName="focus:!ring-0 placeholder:text-[#6B7280]"
-        />
-        {errors.UplineId && <p className="text-red-500 text-xs">{errors.UplineId}</p>}
-      </div>
-      
-      <WalletStatus/>
-      
+      <form noValidate onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-3">
+          {/* Upline ID Input Field */}
+          <Input
+            name="UplineId"
+            type="text"
+            placeholder="Upline ID"
+            value={formData.UplineId}
+            onChange={handleChange}
+            inputClassName="focus:!ring-0 placeholder:text-[#6B7280]"
+          />
+          {errors.UplineId && (
+            <p className="text-red-500 text-xs">{errors.UplineId}</p>
+          )}
+        </div>
 
-      {/* Sign Up Button */}
-      <Button
-        type="submit"
-        className="mt-5 rounded-lg !text-sm uppercase tracking-[0.04em]"
-      >
-        Sign Up
-      </Button>
-    </form>
+        {/* Wallet Status Component */}
+        <WalletStatus />
+
+        {/* Sign Up Button */}
+        <Button
+          type="submit"
+          className="mt-5 rounded-lg !text-sm uppercase tracking-[0.04em]"
+        >
+          Sign Up
+        </Button>
+      </form>
     </>
   );
 }
