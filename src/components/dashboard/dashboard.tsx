@@ -298,6 +298,21 @@ console.log("Total revenue for x4 (matrix 2):", totalRevenueX4);
 
 const totalRevenue = totalRevenueX3 + totalRevenueX4;
 
+const totalInvestmentX3 = levels.reduce((acc, level, index) => {
+  return activeLevelsX3[index] ? acc + level.cost : acc;
+}, 0);
+
+const totalInvestmentX4 = levels.reduce((acc, level, index) => {
+  return activeLevelsX4[index] ? acc + level.cost : acc;
+}, 0);
+
+const totalInvestment = totalInvestmentX3 + totalInvestmentX4;
+
+const userEarningsRatio = totalInvestment > 0 
+  ? ((totalRevenue / totalInvestment) * 100).toFixed(2) 
+  : '0'; // Avoid division by zero
+
+
   useEffect(() => {
     handleFetchUser();
   }, [userAddress, users]);
@@ -312,7 +327,7 @@ const totalRevenue = totalRevenueX3 + totalRevenueX4;
             increase="↑ 0"
           />
           <StatCard title="Team" value={teamSize} increase="↑ 0" />
-          <StatCard title="Ratio" value="209%" increase="↑ 0%" />
+          <StatCard title="Ratio" value={`${userEarningsRatio}%`} increase="↑ 0%" />
           <StatCard title="Profits" value={totalRevenue} increase="↑ 0" />
         </>
       ) : (

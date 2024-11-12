@@ -21,8 +21,8 @@ const SmartContractComponent = () => {
 
   return (
     <div>
-      <ConnectWallet />
-      <h2>BASIC_PRICE: {loading ? "Loading..." : basicPrice !== null ? `${basicPrice} ETH` : "null ETH"}</h2>
+      
+      {/* <h2>BASIC_PRICE: {loading ? "Loading..." : basicPrice !== null ? `${basicPrice} ETH` : "null ETH"}</h2> */}
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
     </div>
   );

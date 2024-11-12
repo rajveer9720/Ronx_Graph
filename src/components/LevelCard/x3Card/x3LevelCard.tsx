@@ -22,7 +22,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   console.log("user id:",userId);
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+  const staticAddress = '0x7f8fc3385a1763Fdab015Ad7e778223099E95b80'; // Fallback static address
    // Fetch user wallet address if userId is provided, else use static address
    useEffect(() => {
     const fetchUserAddress = async () => {
