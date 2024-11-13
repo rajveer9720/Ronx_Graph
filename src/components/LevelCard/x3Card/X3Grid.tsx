@@ -32,7 +32,7 @@ const X3Grid: React.FC = () => {
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress= address; // Fallback static address
+  const staticAddress= address.toString(); // Fallback static address
   
   // Fetch user wallet address if userId is provided, else use static address
   useEffect(() => {
