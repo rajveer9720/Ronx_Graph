@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './x4LevelCard'; // Ensure the path is correct
+import { useWallet } from '@/components/nft/WalletContext';
 
 const levelDataX4 = [
   { level: 1, cost: 5 },
@@ -22,6 +23,7 @@ const levelDataX4 = [
 ];
 
 const X4Grid: React.FC = () => {
+  const address = useWallet();
   const { getTotalCycles, userX4Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
@@ -31,7 +33,7 @@ const X4Grid: React.FC = () => {
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+  const staticAddress= address; // Fallback static address
   const matrix = 2; // x4 matrix
 
   // Fetch user wallet address if userId is provided, else use static address

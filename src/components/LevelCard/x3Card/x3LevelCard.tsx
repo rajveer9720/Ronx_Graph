@@ -1,7 +1,7 @@
 // src/components/LevelCard/LevelCard.tsx
 'use client';
 import { useEffect, useState, Suspense  } from 'react';
-
+import { useWallet } from '@/components/nft/WalletContext';
 import { useRouter,useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
@@ -15,6 +15,7 @@ interface LevelCardProps {
 
 const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount }) => {
   const router = useRouter();
+  const address = useWallet();
   const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
 
   const searchParams = useSearchParams();
@@ -22,7 +23,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   console.log("user id:",userId);
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+  const staticAddress= address.toString(); // Fallback static address
    // Fetch user wallet address if userId is provided, else use static address
    useEffect(() => {
     const fetchUserAddress = async () => {

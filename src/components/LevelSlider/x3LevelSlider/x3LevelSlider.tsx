@@ -6,8 +6,9 @@ import LevelHeader from '@/components/levelheader/x3levelheader/x3levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
-import { useWallet } from '@/app/context/WalletContext';
 import LevelTransection from '@/components/level_transection/level_transection';
+import { useWallet } from '@/components/nft/WalletContext';
+
 
 const levels = [
   { level: 1, cost: 5 },
@@ -25,7 +26,7 @@ const levels = [
 ];
 
 const LevelSliderx3: React.FC = () => {
-  const { address } = useWallet();
+  const address = useWallet();
 
   const searchParams = useSearchParams(); // Get search parameters from URL
   const userId = searchParams.get('userId'); // Extract userId from query parameters
@@ -54,7 +55,7 @@ const LevelSliderx3: React.FC = () => {
 
 
 
-  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const staticAddress= address.toString(); // Fallback static address
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
 
   const [userData, setUserData] = useState<{
@@ -256,7 +257,7 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
        <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
       
       
-      
+       
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
