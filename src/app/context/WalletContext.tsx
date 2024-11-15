@@ -49,6 +49,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 };
 
+
+
 export const useWallet = () => {
   const context = useContext(WalletContext);
   if (!context) {

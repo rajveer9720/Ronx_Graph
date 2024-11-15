@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import cn from 'classnames';
 import AuthorCard from '@/components/ui/author-card';
 import Logo from '@/components/ui/logo';
@@ -18,6 +19,35 @@ import { LAYOUT_OPTIONS } from '@/lib/constants';
 export default function Sidebar({ className }: { className?: string }) {
   const { closeDrawer } = useDrawer();
   const layoutOption = '';
+  const [username, setusername] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        console.log("Fetched Data:", data);
+
+        if (data && data.length > 0) {
+          // Assuming the data is an array of users, we fetch the first user for display
+          const user = data[0];
+          setusername(user?.username);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setError('Failed to fetch users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
   const retroMenu = defaultMenuItems.map((item) => ({
     name: item.name,
     icon: item.icon,
@@ -61,7 +91,7 @@ export default function Sidebar({ className }: { className?: string }) {
         <div className="px-6 pb-5 2xl:px-8">
           <AuthorCard
             image={AuthorImage}
-            name="Cameron Williamsons"
+            name={username || undefined}
             role="admin"
           />
 
