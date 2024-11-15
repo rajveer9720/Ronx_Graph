@@ -3,7 +3,7 @@ import { useSmartContract } from '../../hooks/useSmartContract';
 import { useWeb3 } from '../../hooks/useWeb3';
 import ConnectWallet from '../connectWallets/ConnectWallet';
 
-const contractAddress = "0x04bbddcfc9321458c3403c64cb5b2ec06b619679"; // Your contract address on BSC Testnet
+const contractAddress = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5"; // Your contract address on BSC Testnet
 
 const SmartContractComponent = () => {
   const { provider, account } = useWeb3(); // Extract account from useWeb3
