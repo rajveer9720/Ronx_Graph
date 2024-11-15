@@ -1,5 +1,10 @@
 import RetroLayout from '@/layouts/retro/layout';
+import { WalletProvider } from '@/components/nft/WalletContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <RetroLayout>{children}</RetroLayout>;
+  return (
+    <WalletProvider>
+      <RetroLayout>{children}</RetroLayout>
+    </WalletProvider>
+  );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
-
+import { useWallet } from '@/components/nft/WalletContext';
 interface StatCardProps {
   title: string;
   value: string;
@@ -35,11 +35,13 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
 
 const Dashboard: React.FC = () => {
   const { userX3Matrix, users, getUserIdsWalletaddress, getTeamSizeData, usersActiveX3Levels,usersActiveX4Levels, getTotalCycles,getPartnerCount } = useSmartContract();
+  const address = useWallet();
+  console.log("address test:",address);
 
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
 
-  const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+  const staticAddress= address.toString(); // Fallback static address
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers

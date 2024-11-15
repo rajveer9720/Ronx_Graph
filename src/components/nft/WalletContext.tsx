@@ -1,4 +1,5 @@
-// src/app/context/WalletContext.tsx
+'use client'; // This marks the component as a client component
+
 import { createContext, useContext } from 'react';
 import { useAccount } from 'wagmi';
 
