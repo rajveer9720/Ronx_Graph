@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+import { useWallet } from '@/components/nft/WalletContext';
+
+
 
 const programs = [
   { name: 'x3', partners: 0, perCycle: '0 BUSD', color: 'bg-main-blue' },
@@ -26,6 +29,7 @@ const levels = [
 
 const Program: React.FC = () => {
   const router = useRouter();
+  const address = useWallet();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
 
@@ -35,7 +39,11 @@ const Program: React.FC = () => {
   const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false));
   const [loading, setLoading] = useState(true);
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+<<<<<<< HEAD
   const staticAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C'; // Fallback static address
+=======
+  const staticAddress= address.toString(); // Fallback static address
+>>>>>>> e6c3bf5754c258ce45ca48066b9d575f2d45923f
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
