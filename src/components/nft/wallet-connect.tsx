@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Web3 from 'web3';
 import { useWeb3Modal } from '@web3modal/react';
 import { useWallet } from '@/app/context/WalletContext';
 import cn from 'classnames';
@@ -13,9 +14,12 @@ import { PowerIcon } from '@/components/icons/power';
 import SwapComponent from '@/components/currencySwap/currencySwap';
 
 export default function WalletConnect() {
-  const { walletAddress, balance, networkId, disconnect, isConnected } = useWallet();
+  const { walletAddress, networkId, disconnect, isConnected } = useWallet();
   const { open } = useWeb3Modal();
+  const [balance, setBalance] = useState<string | null>(null);
   const [isSwapOpen, setIsSwapOpen] = useState(false);
+
+  const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c";
 
   // Function to get the network name based on networkId
   const getNetworkName = (networkId: number | null) => {
@@ -30,6 +34,45 @@ export default function WalletConnect() {
         return 'Unknown Network';
     }
   };
+
+  // Fetch the real-time balance using Web3.js
+  const fetchBalance = async (address: string, networkId: number | null) => {
+    if (!address || !networkId) return;
+
+    try {
+      // Set up the Web3 provider based on networkId
+      const rpcUrl =
+        networkId === 1
+          ? `https://bsc-testnet.infura.io/v3/${INFURA_PROJECT_ID}`
+          : networkId === 56
+          ? 'https://bsc-dataseed.binance.org/'
+          : networkId === 97
+          ? 'https://data-seed-prebsc-1-s1.binance.org:8545/'
+          : null;
+
+      if (!rpcUrl) {
+        console.error('Unsupported network');
+        return;
+      }
+
+      const web3 = new Web3(new Web3.providers.HttpProvider(rpcUrl));
+
+      // Fetch the balance
+      const rawBalance = await web3.eth.getBalance(address);
+      const formattedBalance = web3.utils.fromWei(rawBalance, 'ether');
+      setBalance(parseFloat(formattedBalance).toFixed(4)); // Show balance up to 4 decimal places
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+      setBalance(null);
+    }
+  };
+
+  // Fetch balance whenever walletAddress or networkId changes
+  useEffect(() => {
+    if (isConnected && walletAddress) {
+      fetchBalance(walletAddress, networkId);
+    }
+  }, [walletAddress, networkId, isConnected]);
 
   return (
     <>
@@ -66,7 +109,9 @@ export default function WalletConnect() {
                       <div className="truncate text-gray-900 dark:text-white">
                         {walletAddress}
                       </div>
-                      <div className="mt-2 text-gray-900 dark:text-white">Balance: {balance ?? 'Loading...'}</div>
+                      <div className="mt-2 text-gray-900 dark:text-white">
+                        Balance: {balance ?? 'Loading...'} BNB
+                      </div>
                       <div className="mt-1 text-gray-900 dark:text-white">
                         Network: {getNetworkName(networkId)}
                       </div>
@@ -97,9 +142,7 @@ export default function WalletConnect() {
       )}
 
       {/* Swap Popup Modal */}
-      {isSwapOpen && (
-        <SwapComponent onClose={() => setIsSwapOpen(false)} />
-      )}
+      {isSwapOpen && <SwapComponent onClose={() => setIsSwapOpen(false)} />}
     </>
   );
 }
