@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
 
-const CONTRACT_ADDRESS = "0x235E70d34EB6103226d8Dd1d843b2043226929A2";
+const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5";
   const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
 
 interface SmartContractContextType {
