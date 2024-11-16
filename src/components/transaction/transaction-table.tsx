@@ -51,6 +51,48 @@ const COLUMNS = [
   },
 ];
 
+
+const BSC_SCAN_API_KEY = "Y8CW8PKJNV15RH999SPQB83BHEPKHD3ANK";     // Replace with your BscScan API key
+  const BSC_ADDRESS = "0xf7f5dC128E57d1Def75A79AEeF89b5ED7dbE714C";  // Address to fetch transactions for
+  
+  // Function to fetch transactions
+  const getTransactions = async () => {
+    try {
+      // BscScan API URL for fetching transactions
+      const url = `https://api-testnet.bscscan.com/api?module=account&action=txlist&address=${BSC_ADDRESS}&startblock=0&endblock=99999999&sort=asc&apikey=${BSC_SCAN_API_KEY}`;
+  
+      // Fetch transaction data
+      const response = await axios.get(url);
+  
+      if (response.data.status === "1") {
+        const transactions = response.data.result;
+        // console.log("Transaction List:", transactions);
+  
+        // Filter transactions with status "success"
+        const successfulTransactions = transactions.filter(tx => tx.txreceipt_status === "1");
+  
+        // Example: Process each successful transaction as needed
+        successfulTransactions.forEach((tx) => {
+          // console.log(`Tx Hash: ${tx.hash}, From: ${tx.from}, To: ${tx.to}, Value: ${ethers.utils.formatEther(tx.value)} BNB`);
+        });
+        return successfulTransactions;
+      } else {
+        console.log("No transactions found or an error occurred:", response.data.message);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      return [];
+    }
+  };
+  
+  // Call the function
+  getTransactions();
+
+
+
+
+
 export default function TransactionTable() {
   const { getPlatformRecentActivity } = useSmartContract();
   const [tableData, setTableData] = useState([]);
