@@ -1,49 +1,122 @@
 'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import AuthorInformation from '@/components/author/author-information';
 import { authorData } from '@/data/static/author';
 import { Check } from '@/components/icons/check';
 import { Copy } from '@/components/icons/copy';
-import Button from '@/components/ui/button';
-import AnchorLink from '@/components/ui/links/anchor-link';
-import Avatar from '@/components/ui/avatar';
-import ProfileTab from '@/components/profile/profile-tab';
-import userBanner from '@/assets/images/userBanner.png'
+import userBanner from '@/assets/images/userBanner.png';
+import { useWallet } from '@/app/context/WalletContext';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+
+interface User {
+  _id: string;
+  userid: number;
+  userWalletAddress: string;
+  profilePic: string;
+  personalLink: string;
+  username: string;
+}
 
 export default function Profile() {
+  const {users} = useSmartContract();
+  const {walletAddress} = useWallet();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [copyButtonStatus, setCopyButtonStatus] = useState(false);
   const [_, copyToClipboard] = useCopyToClipboard();
-  function handleCopyToClipboard() {
+  const [user, setUser] = useState<User[]>([]);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [personalLink, setPersonalLink] = useState<string | null>(null);
+  const [username, setusername] = useState<string | null>(null);
+  const [referal, setReferal] = useState<string | null>(null);
+  const [referalId, setReferalId] = useState<number | null>(null);
+  const [timeStamps, setTimeStamps] = useState<number | null>(null);
+
+    const userreferal = async (walletAddress:string) => {
+        const data = await users(walletAddress);
+        if (data) {
+          setUserId(data.id);
+          setTimeStamps(data.registrationTime);
+        }
+        const responseaddress:string | undefined = data?.referrer;
+        console.log("responseaddress:",responseaddress);
+        const referaIddata = responseaddress ? await users(responseaddress) : null;
+        console.log("referaId:",referaIddata);
+        try{
+          
+          if(referaIddata?.id) {
+            setReferalId(referaIddata.id);
+            setError(null);
+          }
+        }catch(error){
+          console.error('Error fetching users:', error);
+          setError('Failed to fetch users');
+    }  
+  };
+
+  // add timestap converotr
+
+    
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        console.log("Fetched Data:", data);
+
+        if (data && data.length > 0) {
+          // Assuming the data is an array of users, we fetch the first user for display
+          const user = data[0];
+          setusername(user?.username);
+          setUserId(user.userid);
+          setProfilePic(user.profilePic);
+          setPersonalLink(user.personalLink);
+          setUser(data);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setError('Failed to fetch users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    if (walletAddress) {
+      userreferal(walletAddress);
+    }
+  }, [users,walletAddress]);
+
+  const handleCopyToClipboard = () => {
     copyToClipboard(authorData.wallet_key);
     setCopyButtonStatus(true);
-    setTimeout(() => {
-      setCopyButtonStatus(copyButtonStatus);
-    }, 2500);
-  }
+    setTimeout(() => setCopyButtonStatus(false), 2500);
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <div className="flex w-full flex-col pt-4 md:flex-row md:pt-10 lg:flex-row 3xl:pt-12">
-      <div className="shrink-0 border-dashed border-gray-200 dark:border-gray-700 md:w-72 ltr:md:border-r md:ltr:pr-7 rtl:md:border-l md:rtl:pl-7 lg:ltr:pr-10 lg:rtl:pl-10  3xl:ltr:pr-14 3xl:rtl:pl-14">
-        <div className="text-center ltr:md:text-left rtl:md:text-right">
-          <h2 className="text-xl font-medium tracking-tighter text-gray-900 dark:text-white xl:text-2xl">
-            {authorData?.name}
-          </h2>
-          <div className="mt-1 text-sm font-medium tracking-tighter text-gray-600 dark:text-gray-400 xl:mt-3">
-            @{authorData?.user_name}
-          </div>
-          <div className="md:max-w-auto mx-auto mt-5 flex h-9 max-w-sm items-center rounded-full bg-white shadow-card dark:bg-light-dark md:mx-0 xl:mt-6">
+      {/* Author Information */}
+      <div className="shrink-0 border-dashed border-gray-200 dark:border-gray-700 md:w-72 ltr:md:border-r md:ltr:pr-7 rtl:md:border-l md:rtl:pl-7 lg:ltr:pr-10 lg:rtl:pl-10 3xl:ltr:pr-14 3xl:rtl:pl-14">
+      <div className="md:max-w-auto mx-auto mt-5 flex h-9 max-w-sm items-center rounded-full bg-white shadow-card dark:bg-light-dark md:mx-0 xl:mt-6">
             <div className="inline-flex h-full shrink-0 grow-0 items-center rounded-full bg-gray-900 px-4 text-xs text-white sm:text-sm">
-              #{authorData?.id}
+            ID: {userId}
             </div>
             <div className="text truncate text-ellipsis bg-center text-xs text-gray-500 ltr:pl-4 rtl:pr-4 dark:text-gray-300 sm:text-sm">
-              {authorData?.wallet_key}
+            {walletAddress?.substr(walletAddress.length - 10)}
             </div>
             <div
               title="Copy Address"
               className="flex cursor-pointer items-center px-4 text-gray-500 transition hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-              onClick={() => handleCopyToClipboard()}
-            >
+              onClick={handleCopyToClipboard}
+            > 
               {copyButtonStatus ? (
                 <Check className="h-auto w-3.5 text-green-500" />
               ) : (
@@ -51,104 +124,60 @@ export default function Profile() {
               )}
             </div>
           </div>
-        </div>
-        {/* <div className="mt-10 flex flex-wrap items-center justify-center gap-6 border-y border-dashed border-gray-200 py-5 text-center dark:border-gray-700 md:justify-start ltr:md:text-left rtl:md:text-right xl:mt-12 xl:gap-8 xl:py-6"> */}
-        {/* <div>
-            <div className="mb-1.5 text-lg font-medium tracking-tighter text-gray-900 dark:text-white">
-              {authorData?.following}
-            </div>
-            <div className="text-sm tracking-tighter text-gray-600 dark:text-gray-400">
-              Following
-            </div>
-          </div> */}
-        {/* <div> */}
-        {/* <div className="mb-1.5 text-lg font-medium tracking-tighter text-gray-900 dark:text-white">
-              {authorData?.followers}
-            </div> */}
-        {/* <div className="text-sm tracking-tighter text-gray-600 dark:text-gray-400">
-              Followers
-            </div> */}
-        {/* </div> */}
-        {/* <Button
-            color="white"
-            className="shadow-card dark:bg-light-dark md:h-10 md:px-5 xl:h-12 xl:px-7"
-          >
-            Follow
-          </Button> */}
-        {/* </div> */}
-        {/* <div className="border-y border-dashed border-gray-200 py-5 text-center dark:border-gray-700 ltr:md:text-left rtl:md:text-right xl:py-6"> */}
-        {/* <div className="mb-2 text-sm font-medium uppercase tracking-wider text-gray-900 dark:text-white">
-            Followed by
-          </div> */}
-        {/* <div className="flex justify-center md:justify-start">
-            {authorData?.followed_by?.map((item) => (
-              <AnchorLink
-                key={`author-key-${item?.id}`}
-                href="/"
-                className="-ml-2 first:ml-0"
-              >
-                <Avatar
-                  size="sm"
-                  image={item?.avatar?.thumbnail}
-                  alt="Author"
-                  height={28}
-                  width={28}
-                  className="dark:border-gray-500"
-                />
-              </AnchorLink>
-            ))}
-          </div> */}
-        {/* <div className="mt-4">
-            <AnchorLink
-              href="#"
-              className="text-sm tracking-tighter text-gray-600 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            >
-              View All
-            </AnchorLink>
+          {referalId ? 
+        <div className="text-center ltr:md:text-left rtl:md:text-right flex space-x-2">
+          <h2 className="mt-1 text-sm font-medium tracking-tighter text-gray-600 dark:text-gray-400 xl:mt-3">
+          invited  {timeStamps && new Date(parseInt(timeStamps.toString(), 10) * 1000).toLocaleDateString()} 
+          </h2>
+          <div className="text-lg font-medium pt-1 text-gray-900 dark:text-white xl:text-md">
+              by <a href="#">{referalId}</a>
           </div>
-        </div> */}
-        {/* <AuthorInformation className="hidden md:block" data={authorData} /> */}
-      </div>
-      <div className=" w-full flex-row">      <div className="profile-section p-1 text-white rounded-lg w-full">
-        <div className="profile-header flex items-center ">
-          <div className="w-full">
-            <div className="profile-link mt-2 p-4 bg-[#406aff] bg-opacity-60 rounded-xl">
-              <h4 className="mb-6">Personal link</h4>
-              <a href="https://RonX.io/b/pyffvf" target="_blank" rel="noopener noreferrer" className="text-white hover:underline text-2xl">
-                Link:
-              </a>
-            </div>
-
-          </div>
+         
         </div>
-
-
+        : undefined}
       </div>
 
+      {/* Profile Sections */}
+      <div className="w-full flex-row">
+        {/* Personal Link Section */}
         <div className="profile-section p-1 text-white rounded-lg w-full">
-          <div className="profile-header flex items-center ">
+          <div className="profile-header flex items-center">
             <div className="w-full">
-              <div className="profile-link mt-2 p-4 h-24  bg-opacity-60 rounded-xl" style={{
-                backgroundImage: `url(${userBanner.src})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                height: '15vh', // Adjust the height as needed
-                backgroundRepeat: 'no-repeat',
-              }}>
-                <div className='flex gap-6 ml-12'>
-                <h4 className="  mt-6 text-xl align-middle">Ronx Token</h4>
-                <a href="https://RonX.io/b/pyffvf" target="_blank" rel="noopener noreferrer" className="text-white  mt-6">
-                 Login in RonX
+              <div className="profile-link mt-2 p-4 bg-[#406AFF] bg-opacity-60 rounded-xl">
+                <h4 className="mb-6">Personal Link</h4>
+                <a href={personalLink || "#"} target="_blank" rel="noopener noreferrer" className="text-white hover:underline text-2xl">
+                  {personalLink || "No Personal Link"}
                 </a>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Banner Section */}
+        <div className="profile-section p-1 text-white rounded-lg w-full">
+          <div className="profile-header flex items-center">
+            <div className="w-full">
+              <div
+                className="profile-link mt-2 p-4 h-24 bg-opacity-60 rounded-xl"
+                style={{
+                  backgroundImage: `url(${userBanner.src})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  height: '15vh',
+                  backgroundRepeat: 'no-repeat',
+                }}
+              >
+                <div className="flex gap-6 ml-12">
+                  <h4 className="mt-6 text-xl">Ronx Token</h4>
+                  <a href="https://RonX.io/b/pyffvf" target="_blank" rel="noopener noreferrer" className="text-white mt-6">
+                    Login in RonX
+                  </a>
                 </div>
               </div>
-
             </div>
           </div>
-
-
         </div>
-
       </div>
 
       <AuthorInformation data={authorData} />
