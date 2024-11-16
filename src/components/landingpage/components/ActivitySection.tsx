@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { fetchPartnerData, Partner } from '@/components/SmartContract/smartcontract';
+import {fetchPartnerData, Partner } from '@/components/parteners/smartcontract/smartcontract';
 
 const PartnerPage: React.FC = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
