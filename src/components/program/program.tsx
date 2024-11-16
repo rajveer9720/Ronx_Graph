@@ -30,6 +30,10 @@ const levels = [
 const Program: React.FC = () => {
   const router = useRouter();
   const address = useWallet();
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
 
@@ -39,7 +43,7 @@ const Program: React.FC = () => {
   const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false));
   const [loading, setLoading] = useState(true);
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress= address.toString(); // Fallback static address
+
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));

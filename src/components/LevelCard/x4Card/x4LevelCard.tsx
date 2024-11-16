@@ -18,7 +18,10 @@ interface LevelCardProps {
 const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount,partnersCountlayer2 }) => {
   const router = useRouter();
   const address = useWallet();
-
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
   const { getUserIdsWalletaddress } = useSmartContract();
 
 
@@ -28,7 +31,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   console.log("user id:",userId);
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress= address.toString(); // Fallback static address
+
    // Fetch user wallet address if userId is provided, else use static address
    useEffect(() => {
     const fetchUserAddress = async () => {
