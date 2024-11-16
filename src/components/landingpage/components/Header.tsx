@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ onRegistrationClick }) => {
         className="space-x-4"
       >
         <Link href="#documentation" color="white" _hover={{ color: 'gray.400' }}>Documentation</Link>
-        <Link href="#login" color="white" _hover={{ color: 'gray.400' }}>Login</Link>
+        <Link href={`/authentication`} color="white" _hover={{ color: 'gray.400' }}>Login</Link>
         <Link
           href="#register"
           onClick={(e) => { e.preventDefault(); onRegistrationClick(); }}
