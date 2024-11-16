@@ -13,6 +13,7 @@ import Scrollbar from '@/components/ui/scrollbar';
 import { LongArrowRight } from '@/components/icons/long-arrow-right';
 import { LongArrowLeft } from '@/components/icons/long-arrow-left';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+import axios from 'axios';
 
 const COLUMNS = [
   {
