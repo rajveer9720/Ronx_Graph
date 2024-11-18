@@ -46,7 +46,7 @@ const COLUMNS = [
     minWidth: 160,
     maxWidth: 220,
     // Align timestamp to the left
-    Cell: ({ cell: { value } }) => (
+    Cell: ({ cell: { value } }: { cell: { value: string } }) => (
       <div className="text-left">{value}</div>
     ),
   },

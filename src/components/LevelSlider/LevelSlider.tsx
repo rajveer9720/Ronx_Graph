@@ -6,7 +6,7 @@ import LevelHeader from '@/components/levelheader/levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
-
+import { useWallet } from '@/components/nft/WalletContext'; // Import the wallet context
 const levels = [
   { level: 1, cost: 5 },
   { level: 2, cost: 10 },
@@ -24,6 +24,14 @@ const levels = [
 
 const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
+  const address = useWallet();
+console.log("address:", address);
+
+// Access the `address` field within the object, or handle undefined
+const staticAddress = address?.address ? address.address.toString() : null;
+
+console.log("staticAddress:", staticAddress);
+
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
   const { getTotalCycles, userX3Matrix, getPartnerCount, users } = useSmartContract();
@@ -39,7 +47,7 @@ const LevelSlider: React.FC = () => {
     registrationTime: number;
   } | null>(null);
 
-  const userAddress = '0xD733B8fDcFaFf240c602203D574c05De12ae358C';
+  const userAddress = staticAddress ; // Get 'address' from URL, fallback to empty string
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
 
   const [userData, setUserData] = useState<{

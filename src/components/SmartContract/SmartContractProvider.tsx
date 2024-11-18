@@ -6,7 +6,8 @@ import abi from "@/components/SmartContract/abi.json";
 import axios from "axios";
 
 const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5";
-  const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
+const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
+
 
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;

@@ -17,9 +17,15 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const router = useRouter();
   const address = useWallet();
   console.log("address:", address);
+
+  
   // Access the `address` field within the object, or handle undefined
-  const staticAddres = address?.address ? address.address.toString() : null;
-  console.log("staticAddress:", staticAddres);
+  const staticAddress = address?.address ? address.address.toString() : null;
+  
+  console.log("staticAddress:", staticAddress);
+  
+
+
   const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
 
   const searchParams = useSearchParams();
@@ -35,15 +41,15 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
           const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
           if (walletAddress) {
             console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
-            setUserAddress(walletAddress); // Set the fetched wallet address
+            setUserAddress(staticAddres); // Set the fetched wallet address
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(staticAddress); // Use static address if fetching fails
+          setUserAddress(staticAddres); // Use static address if fetching fails
         }
       } else {
         // If no userId, use static wallet address
-        setUserAddress(staticAddress);
+        setUserAddress(staticAddres);
       }
     };
 
@@ -56,7 +62,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const handleClick = () => {
     const userIdParam = userId ? `&userId=${userId}` : ''; // Append userId if it exists
 
-    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}${userIdParam}`);
+    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
   };
 
   // Generate partner circles with conditional coloring
