@@ -26,7 +26,12 @@ const levels = [
 ];
 
 const LevelSliderx3: React.FC = () => {
+   
   const address = useWallet();
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
 
   const searchParams = useSearchParams(); // Get search parameters from URL
   const userId = searchParams.get('userId'); // Extract userId from query parameters
@@ -48,14 +53,8 @@ const LevelSliderx3: React.FC = () => {
   } | null>(null);
 
 
-  console.log("address "+address+'\n partnersData '+partnersData+'\n partnerIds ' + partnerIds);
-  
 
 
-
-
-
-  const staticAddress= address.toString(); // Fallback static address
   const matrix = 1; // Assuming a static matrix ID, adjust if needed
 
   const [userData, setUserData] = useState<{
@@ -249,11 +248,11 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
   // const TotalRevenueCal = cyclesData[currentLevel - 1] + currentPartner[currentLevel - 1];
   return (
     <>
-         {address ? (
+         {/* {address ? (
         <p>{address}</p>
       ) : (
         <p>No wallet connected</p>
-      )}
+      )} */}
        <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
       
       

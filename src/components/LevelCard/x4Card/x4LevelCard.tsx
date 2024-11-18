@@ -19,9 +19,12 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const router = useRouter();
   const address = useWallet();
   console.log("address:", address);
-  // Access the `address` field within the object, or handle undefined
   const staticAddress = address?.address ? address.address.toString() : null;
+  
   console.log("staticAddress:", staticAddress);
+  
+
+
   const { getUserIdsWalletaddress } = useSmartContract();
 
 

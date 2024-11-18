@@ -4,9 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import { useWallet } from '@/components/nft/WalletContext';
-
-
-
 const programs = [
   { name: 'x3', partners: 0, perCycle: '0 BUSD', color: 'bg-main-blue' },
   { name: 'x4', partners: 0, perCycle: '0 BUSD', color: 'bg-purple-500' },
@@ -31,9 +28,13 @@ const Program: React.FC = () => {
   const router = useRouter();
   const address = useWallet();
   console.log("address:", address);
+
+  
   // Access the `address` field within the object, or handle undefined
   const staticAddress = address?.address ? address.address.toString() : null;
-  console.log("staticAddress:", staticAddress);
+  
+  console.log("staticAddress: #2", staticAddress);
+
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
 
@@ -341,7 +342,6 @@ console.log("Total revenue for x4 (matrix 2):", totalRevenueX4);
 };
 
 export default Program;
-
 
 
 
