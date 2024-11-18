@@ -1,6 +1,6 @@
 // src/app/api/user/[userid]/route.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import {getCollection} from '@/lib/mongodb';
+import {connectToDatabase} from '@/lib/mongodb';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Check that the request method is GET
   if (req.method !== 'GET') {
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   const { userid } = req.query;
   try {
-    const collection = await getCollection();
+    const collection = await connectToDatabase();
     // Convert userid from string to a number if it’s stored as a number in your MongoDB database
     const user = await collection.findOne({ userid: Number(userid) });
     if (!user) {
