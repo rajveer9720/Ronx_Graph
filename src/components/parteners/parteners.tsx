@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { fetchPartnerData, Partner } from "./smartcontract/smartcontract";
+import { fetchPartnerData, Partner } from "@/components/parteners/smartcontract/smartcontract";
 import { useWallet } from "@/components/nft/WalletContext";
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
@@ -11,7 +11,7 @@ const PartnerPage = () => {
   console.log("address:", address);
   // Access the `address` field within the object, or handle undefined
   const staticAddress = address?.address ? address.address.toString() : null;
-  console.log("staticAddress:", staticAddress);
+  console.log("staticAddress #1:", staticAddress);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +25,7 @@ const PartnerPage = () => {
 
       try {
         // Fetch user data using the address
-        const userData = await users(address.toString());
+        const userData = await users(staticAddress as string);
         if (!userData) {
           console.error("User data not found");
           setLoading(false);
@@ -33,6 +33,7 @@ const PartnerPage = () => {
         }
 
         const userId = userData.id; // Use the user ID fetched from users
+        console.log("userId #1:", userId);
         const data = await fetchPartnerData(userId); // Fetch partners data with the user ID
         setPartners(data);
         setLoading(false);
