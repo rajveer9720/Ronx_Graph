@@ -1,6 +1,6 @@
 // src/app/api/user/[userid]/route.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-// import getCollection  from '@/lib/mongodb';
+import {getCollection} from '@/lib/mongodb';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Check that the request method is GET
   if (req.method !== 'GET') {
