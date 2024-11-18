@@ -8,6 +8,10 @@ import { useSmartContract } from '@/components/SmartContract/SmartContractProvid
 const PartnerPage = () => {
   const { users } = useSmartContract();
   const address = useWallet();
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 

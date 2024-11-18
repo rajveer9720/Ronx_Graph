@@ -1,104 +1,132 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
-import {fetchPartnerData, Partner } from '@/components/parteners/smartcontract/smartcontract';
+import Image from '@/components/ui/image';
+import BannerSecond from '@/assets/images/BannerSecond.png';
+import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
-const PartnerPage: React.FC = () => {
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [loading, setLoading] = useState(true);
+const ActivitySection: React.FC = () => {
+  const { getUserRecentActivityUserMatrics, getPlatformRecentActivity } = useSmartContract();
+  const [totalUser, setTotalUser] = useState(0);
+  const [recentUser, setRecentUser] = useState(0);
+  const [activities, setActivities] = useState<any[]>([]);
 
-  // Fetch partner data on component mount
+  // Fetch getUserRecentActivityUserMatrics data 
   useEffect(() => {
-    const loadData = async () => {
-      const userId = 1; // Adjust this userId as needed
-      const data = await fetchPartnerData(userId);
-      setPartners(data);
-      setLoading(false);
+    const fetchUserMetrics = async () => {
+      const data = await getUserRecentActivityUserMatrics(24, "hour");
+      if (data) {
+        const totalUsers = data.totalUsers?.toNumber() || 0;
+        const recentUsers = data.recentUsers?.toNumber() || 0;
+        setTotalUser(totalUsers);
+        setRecentUser(recentUsers);
+      } else {
+        setTotalUser(0);
+        setRecentUser(0);
+      }
     };
+    fetchUserMetrics();
+  }, [getUserRecentActivityUserMatrics]);
 
-    loadData();
-  }, []);
+  // Fetch platform recent activity data in the specified format
+  useEffect(() => {
+    const fetchPlatformActivity = async () => {
+      try {
+        const data = await getPlatformRecentActivity();
+        console.log("test data platformUser:", data?.toString()); // Log entire string data
+  
+        if (data) {
+          // Split the string by new lines to separate each activity
+          const activityLines = data.split("\n");
+  
+          // Extract user activity details from each line using regex
+          const formattedActivities = activityLines.map((line: string) => {
+            const regex = /User ID: (\d+) - Action: ([\w\s]+) - Matrix: (\d+) - Level: (\d+) - Timestamp: (\d+)/;
+            const match = line.match(regex);
+  
+            if (match) {
+              const [, userId, action, matrix, level, timestamp] = match;
+  
+              return {
+                userId,
+                action,
+                matrix,
+                level,
+                timestamp: new Date(parseInt(timestamp, 10) * 1000).toLocaleString(), // Convert to readable date
+              };
+            } else {
+              return null; // In case there's a mismatch, skip it
+            }
+          }).filter(Boolean); // Remove any null entries
+  
+          setActivities(formattedActivities);
+        }
+      } catch (error) {
+        console.error('Error fetching platform activity:', error);
+      }
+    };
+  
+    fetchPlatformActivity();
+  }, [getPlatformRecentActivity]);
+  
 
   return (
-    <section className="my-10">
-      {/* Banner Section */}
-      <div className="pb-9 w-full mx-auto text-center text-white px-6 lg:px-8 bg-black bg-opacity-60 rounded-lg"
-        style={{
-          backgroundImage: `url(/path/to/your/BannerSecond.png)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}>
-        <h2 className="m-6 pt-7 text-4xl font-bold mb-4">Partner Details</h2>
-        <p className="text-lg mb-8">Explore the partner statistics on the RonX Platform</p>
-
-        {loading ? (
-          <p className="text-white text-xl font-semibold">Loading...</p>
-        ) : (
-          <div className="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
-            {/* Table Container */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-800">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider border-r border-gray-700">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider border-r border-gray-700">
-                      Wallet
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider border-r border-gray-700">
-                      Registration Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider border-r border-gray-700">
-                      Highest X3 Level
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
-                      Highest X6 Level
-                    </th>
+    <section className="my-6">
+      <div>
+        <div className="pb-9 w-full mx-auto text-center text-white px-4 sm:px-6 lg:px-8 bg-black bg-opacity-60 rounded-lg"
+          style={{
+            backgroundImage: `url(${BannerSecond.src})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}>
+          <h2 className="m-6 pt-7 text-4xl font-bold mb-4">Platform Recent Activity</h2>
+          <p className="text-lg mb-8">Real-time global events of the RonX Platform</p>
+          <div className="bg-black rounded-lg overflow-hidden shadow-lg">
+            <div className="overflow-y-auto max-h-96">
+              <table className="table-auto w-full text-left text-white">
+                <thead>
+                  <tr className="bg-gray-800">
+                    <th className="px-4 py-2">User ID</th>
+                    <th className="px-4 py-2">Action</th>
+                    <th className="px-4 py-2">Matrix</th>
+                    <th className="px-4 py-2">Level</th>
+                    <th className="px-4 py-2">Time</th>
                   </tr>
                 </thead>
-                <tbody className="bg-gray-900 divide-y divide-gray-800">
-                  {partners.map((partner, index) => (
-                    <tr key={index} className="hover:bg-gray-700 transition-colors duration-200">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300 border-r border-gray-700">
-                        {partner.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 border-r border-gray-700">
-                        {partner.wallet}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 border-r border-gray-700">
-                        {new Date(partner.timestamp * 1000).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 border-r border-gray-700">
-                        {partner.levelX3}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {partner.levelX6}
-                      </td>
+                <tbody>
+                  {activities.map((activity, index) => (
+                    <tr key={index} className="hover:bg-gray-700">
+                      <td className="px-4 py-2">{activity.userId}</td>
+                      <td className="px-4 py-2">{activity.action}</td>
+                      <td className="px-4 py-2">{activity.matrix}</td>
+                      <td className="px-4 py-2">{activity.level}</td>
+                      <td className="px-4 py-2">{activity.timestamp}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
-        )}
-
-        {/* Partner Statistics Section */}
-        <div className="text-center text-white mt-10">
-          <h2 className="text-3xl font-bold mb-4">Partner Statistics</h2>
-          <div className="mt-8 flex flex-col sm:flex-row justify-around items-center space-y-6 sm:space-y-0">
-            <div>
-              <span className="block text-lg">Total Partners</span>
-              <span className="block text-4xl font-bold">{partners.length}</span>
-            </div>
-            <div>
-              <span className="block text-4xl font-bold">22,631</span>
-              <span className="block text-lg">Total Invested, BNB</span>
-            </div>
-            <div>
-              <span className="block text-4xl font-bold">149,386,219</span>
-              <span className="block text-lg">Total Payout, BUSD</span>
+          <div className="text-center text-white mt-10">
+            <h2 className="text-3xl font-bold mb-4">Partner Results</h2>
+            {/* <p>All data is stored in the blockchain in the public domain and can be verified!<br />
+              Contract address eth: 0x5acc84a3e955Bdd76467d3348077d003f00fFB97<br />
+              Contract address tron: TREbha3Jj6TrpT7e6Z5ukh3NRhyxHsmMug<br />
+              Contract address busd: 0xb2e1eD3394AC2191313A4a9Fcb5B52C4d3c046eF
+            </p> */}
+            <div className="mt-8 flex flex-col sm:flex-row justify-around">
+              <div className="mb-6 sm:mb-0">
+                <span>Member Total</span>
+                <span className="block text-4xl font-bold">{totalUser}</span>
+                <span className="block text-2xl font-bold text-blue-500">{recentUser}</span>
+              </div>
+              <div className="mb-6 sm:mb-0">
+                <span className="block text-4xl font-bold">22,631</span>
+                <span>Total Invested, BNB</span>
+              </div>
+              <div>
+                <span className="block text-4xl font-bold">149,386,219</span>
+                <span>Total Payout, BUSD</span>
+              </div>
             </div>
           </div>
         </div>
@@ -107,4 +135,4 @@ const PartnerPage: React.FC = () => {
   );
 };
 
-export default PartnerPage;
+export default ActivitySection;
