@@ -1,0 +1,72 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_mainContract",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "userId",
+                "type": "uint256"
+            }
+        ],
+        "name": "getDirectPartnerDetails",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "partnerId",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "partnerAddress",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "registrationTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "highestX3Level",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "highestX6Level",
+                        "type": "uint8"
+                    }
+                ],
+                "internalType": "struct SmartMatrixViewHelper.PartnerDetails[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "mainContract",
+        "outputs": [
+            {
+                "internalType": "contract ISmartMatrixForsage",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]

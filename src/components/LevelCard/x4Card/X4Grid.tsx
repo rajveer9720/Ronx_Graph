@@ -23,7 +23,13 @@ const levelDataX4 = [
 ];
 
 const X4Grid: React.FC = () => {
+
+
   const address = useWallet();
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
   const { getTotalCycles, userX4Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
@@ -33,7 +39,7 @@ const X4Grid: React.FC = () => {
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress= address; // Fallback static address
+ 
   const matrix = 2; // x4 matrix
 
   // Fetch user wallet address if userId is provided, else use static address

@@ -91,6 +91,7 @@ export default function Sidebar({ className }: { className?: string }) {
         <div className="px-6 pb-5 2xl:px-8">
           <AuthorCard
             image={AuthorImage}
+            name="Anuj Varshney"
             name={username || undefined}
             role="admin"
           />

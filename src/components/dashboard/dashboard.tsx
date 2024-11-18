@@ -36,12 +36,12 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
 const Dashboard: React.FC = () => {
   const { userX3Matrix, users, getUserIdsWalletaddress, getTeamSizeData, usersActiveX3Levels,usersActiveX4Levels, getTotalCycles,getPartnerCount } = useSmartContract();
   const address = useWallet();
-  console.log("address test:",address);
-
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
-
-  const staticAddress= address.toString(); // Fallback static address
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers

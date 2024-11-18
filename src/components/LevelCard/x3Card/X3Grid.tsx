@@ -24,6 +24,10 @@ const levelDataX3 = [
 
 const X3Grid: React.FC = () => {
   const address = useWallet();
+  console.log("address:", address);
+  // Access the `address` field within the object, or handle undefined
+  const staticAddress = address?.address ? address.address.toString() : null;
+  console.log("staticAddress:", staticAddress);
   const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX3.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX3.length).fill(0));
@@ -32,8 +36,7 @@ const X3Grid: React.FC = () => {
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
   const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-  const staticAddress= address.toString(); // Fallback static address
-  
+
   // Fetch user wallet address if userId is provided, else use static address
   useEffect(() => {
     const fetchUserAddress = async () => {
