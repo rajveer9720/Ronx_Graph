@@ -12,7 +12,11 @@ import Image from '@/components/ui/image';
 import BusdBanner from '@/assets/images/BannerBUSD.png';
 import { Header } from '@/layouts/minimal/components/Header'; 
 
-const topPoolsLimit = (breakpoint) => {
+interface Breakpoint {
+  breakpoint: string;
+}
+
+const topPoolsLimit = (breakpoint: Breakpoint['breakpoint']): number => {
   switch (breakpoint) {
     case 'md':
     case '2xl':

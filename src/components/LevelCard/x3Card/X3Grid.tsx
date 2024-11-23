@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './x3LevelCard'; // Ensure the path is correct
-import { useWallet } from '@/components/nft/WalletContext';
+import { useWallet } from '@/app/context/WalletContext';
 
 const levelDataX3 = [
   { level: 1, cost: 5 },
@@ -23,10 +23,12 @@ const levelDataX3 = [
 ];
 
 const X3Grid: React.FC = () => {
-  const address = useWallet();
-  console.log("address:", address);
+  const walletAddress = useWallet();
+  console.log("address:", walletAddress);
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
+   // Access the `address` field within the object, or handle undefined
+   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+   const userWalletAddress = staticAddress;
   console.log("staticAddress:", staticAddress);
   const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX3.length).fill(null));
@@ -44,15 +46,16 @@ const X3Grid: React.FC = () => {
         try {
           const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
           if (walletAddress) {
-            setUserAddress(walletAddress); // Set the fetched wallet address
+            
+            setUserAddress(userWalletAddress || 'null'); // Set the fetched wallet address
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(staticAddress); // Use static address if fetching fails
+          setUserAddress(userWalletAddress || 'null'); // Use static address if fetching fails
         }
       } else {
         // If no userId, use static wallet address
-        setUserAddress(staticAddress);
+        setUserAddress(userWalletAddress || 'null');  
       }
     };
 
@@ -75,7 +78,7 @@ const X3Grid: React.FC = () => {
         const updatedPartners = await Promise.all(
           levelDataX3.map(async (data) => {
             const partnersInfo = await userX3Matrix(userAddress, data.level);
-            return partnersInfo[1].length; // Assuming partnersInfo[1] holds partners array
+            return Array.isArray(partnersInfo) && partnersInfo[1] ? partnersInfo[1].length : 0; // Ensure partnersInfo is an array and not null
           })
         );
 
@@ -97,30 +100,26 @@ const X3Grid: React.FC = () => {
   }, [userAddress, getTotalCycles, userX3Matrix, getPartnerCount]);
 
   return (
-
     <div className="p-5 min-h-screen text-white">
-          <Suspense fallback={<div>Loading...</div>}>
-
-      <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-5">Ronx x3</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
-          {levelDataX3.map((data, index) => (
-            <LevelCard
-              key={data.level}
-              level={data.level}
-              cost={data.cost}
-              partners={partnerNew[index]}
-              cycles={cyclesData[index]}
-              partnersCount={partnersData[index]}
-            />
-          ))}
+      <Suspense fallback={<div>Loading...</div>}>
+        <div className="container mx-auto">
+          <h1 className="text-3xl font-bold mb-5">Ronx x3</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
+            {levelDataX3.map((data, index) => (
+              <LevelCard
+                key={data.level}
+                level={data.level}
+                cost={data.cost}
+                partners={partnerNew[index]}
+                cycles={cyclesData[index]}
+                partnersCount={partnersData[index]}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-      <NotifyBot />
+        <NotifyBot />
       </Suspense>
     </div>
-    
-
   );
 };
 

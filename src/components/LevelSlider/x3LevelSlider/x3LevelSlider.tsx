@@ -7,7 +7,7 @@ import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 import LevelTransection from '@/components/level_transection/level_transection';
-import { useWallet } from '@/components/nft/WalletContext';
+import { useWallet } from '@/app/context/WalletContext';
 
 
 const levels = [
@@ -27,10 +27,11 @@ const levels = [
 
 const LevelSliderx3: React.FC = () => {
    
-  const address = useWallet();
-  console.log("address:", address);
+  const walletAddress = useWallet();
+  console.log("address:", walletAddress);
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
+  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+  const userWalletAddress = staticAddress;
   console.log("staticAddress:", staticAddress);
 
   const searchParams = useSearchParams(); // Get search parameters from URL
@@ -75,16 +76,16 @@ const LevelSliderx3: React.FC = () => {
           try {
             const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
             if (walletAddress) {
-              console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
-              setUserAddress(walletAddress); // Set the fetched wallet address
+              console.log("Fetched wallet address:", userWalletAddress); // Log the fetched address for debugging
+              setUserAddress(userWalletAddress || 'null'); // Set the fetched wallet address
             }
           } catch (error) {
             console.error("Error fetching wallet address for userId:", error);
-            setUserAddress(staticAddress); // Use static address if fetching fails
+            setUserAddress(userWalletAddress || 'null'); // Use static address if fetching fails
           }
         } else {
           // If no userId, use static wallet address
-          setUserAddress(staticAddress);
+          setUserAddress(userWalletAddress || 'null');
         }
       };
   
@@ -153,7 +154,7 @@ const LevelSliderx3: React.FC = () => {
           try {
             const userInfo = await users(partnerAddress);
             if (userInfo) {
-              return userInfo.id;
+              return userInfo.id.toString();
             }
             return null;
           } catch (error) {
@@ -164,7 +165,7 @@ const LevelSliderx3: React.FC = () => {
 
         const currenctData = await Promise.all(
           levels.map(async (level) => {
-            const partnersInfo = await userX3Matrix(userAddress, level.level);
+            const partnersInfo = await userX3Matrix(userAddress, level.level) as [number, string[]] | null;
 
             if (partnersInfo && Array.isArray(partnersInfo[1])) {
               const partnerAddresses = partnersInfo[1];
@@ -179,7 +180,7 @@ const LevelSliderx3: React.FC = () => {
 
               setPartnerIds((prev) => {
                 const newPartnerIds = [...prev];
-                newPartnerIds[level.level - 1] = userIds;
+                newPartnerIds[level.level - 1] = userIds.map(id => id ? id.toString() : null);
                 return newPartnerIds;
               });
 
@@ -216,9 +217,9 @@ const LevelSliderx3: React.FC = () => {
   const levelData = levels.find(level => level.level === currentLevel);
   const adjustedPartnersCount = partnersData[currentLevel - 1];
   // Calculate total revenue considering cycles and partners
-  const cyclesContribution = cyclesData[currentLevel - 1] * 2 * levelData.cost;
+  const cyclesContribution = (cyclesData[currentLevel - 1] ?? 0) * 2 * (levelData?.cost ?? 0);
   console.log("total cyclesCountribution:" + cyclesContribution);
-  const partnerContribution = currentPartner[currentLevel - 1] * levelData.cost;
+  const partnerContribution = (currentPartner[currentLevel - 1] ?? 0) * (levelData?.cost ?? 0);
   console.log("total partnerContribution:" + partnerContribution);
   const totalRevenue = cyclesContribution + partnerContribution;
   console.log("total totalRevenue:" + totalRevenue);
@@ -253,7 +254,7 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
       ) : (
         <p>No wallet connected</p>
       )} */}
-       <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
+       <LevelHeader userid={userData?.id ?? 0} level={currentLevel} uplineId={uplineuserData?.id ?? 0} />
       
       
        
@@ -280,10 +281,10 @@ console.log(`Overall total revenue: ${overallTotalRevenue}`);
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
-                        className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
+                        className={`relative w-24 h-24 rounded-full ${currentPartner && currentLevel && currentPartner[currentLevel - 1] !== null && i < currentPartner[currentLevel - 1]! ? 'bg-blue-600' : 'bg-gray-400'}`}
                       >
                         {/* Center User ID within the circle */}
-                        {i < currentPartner[currentLevel - 1] && partnerIds[currentLevel - 1]?.[i] && (
+                        {currentPartner?.[currentLevel - 1] !== null && partnerIds?.[currentLevel - 1]?.[i] && i < currentPartner[currentLevel - 1]! && (
                           <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
                             {partnerIds[currentLevel - 1][i]}
                           </span>

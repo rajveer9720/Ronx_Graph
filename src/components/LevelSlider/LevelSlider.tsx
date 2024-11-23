@@ -6,7 +6,7 @@ import LevelHeader from '@/components/levelheader/levelheader';
 import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
-import { useWallet } from '@/components/nft/WalletContext'; // Import the wallet context
+import { useWallet } from '@/app/context/WalletContext'; // Import the wallet context
 const levels = [
   { level: 1, cost: 5 },
   { level: 2, cost: 10 },
@@ -24,13 +24,14 @@ const levels = [
 
 const LevelSlider: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
-  const address = useWallet();
-console.log("address:", address);
+  const walletAddress = useWallet();
+console.log("address:", walletAddress);
 
 // Access the `address` field within the object, or handle undefined
-const staticAddress = address?.address ? address.address.toString() : null;
+const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+const userWalletAddress = staticAddress;
 
-console.log("staticAddress:", staticAddress);
+console.log("staticAddress:", userWalletAddress);
 
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
@@ -62,7 +63,7 @@ console.log("staticAddress:", staticAddress);
   // Fetch current user data
   const handleFetchUser = async () => {
     try {
-      const data = await users(userAddress);
+      const data = await users(userWalletAddress || 'null');
       if (data) {
         setUserData(data);
         setError(null); // Clear error if successful
@@ -105,14 +106,14 @@ console.log("staticAddress:", staticAddress);
       try {
         const updatedCycles = await Promise.all(
           levels.map(async (level) => {
-            const cycles = await getTotalCycles(userAddress, matrix, level.level);
+            const cycles = await getTotalCycles(userWalletAddress || 'null', matrix, level.level);
             return cycles;
           })
         );
 
         const updatedPartners = await Promise.all(
           levels.map(async (level) => {
-            const partnerCount = await getPartnerCount(userAddress, matrix, level.level);
+            const partnerCount = await getPartnerCount(userWalletAddress || 'null', matrix, level.level);
             return partnerCount || 0;
           })
         );
@@ -132,9 +133,9 @@ console.log("staticAddress:", staticAddress);
 
         const currenctData = await Promise.all(
           levels.map(async (level) => {
-            const partnersInfo = await userX3Matrix(userAddress, level.level);
+            const partnersInfo = await userX3Matrix(userWalletAddress || 'null', level.level) || [0, []];
 
-            if (partnersInfo && Array.isArray(partnersInfo[1])) {
+            if (Array.isArray(partnersInfo) && Array.isArray(partnersInfo[1])) {
               const partnerAddresses = partnersInfo[1];
               const partnerCount = partnerAddresses.length;
               console.log("partnerCount:"+ partnerCount);
@@ -147,7 +148,7 @@ console.log("staticAddress:", staticAddress);
 
               setPartnerIds((prev) => {
                 const newPartnerIds = [...prev];
-                newPartnerIds[level.level - 1] = userIds;
+                newPartnerIds[level.level - 1] = userIds.map(id => id !== null ? id.toString() : null);
                 return newPartnerIds;
               });
 
@@ -184,9 +185,9 @@ console.log("staticAddress:", staticAddress);
   const levelData = levels.find(level => level.level === currentLevel);
   const adjustedPartnersCount = partnersData[currentLevel - 1];
   // Calculate total revenue considering cycles and partners
-  const cyclesContribution = cyclesData[currentLevel - 1] * 2 * levelData.cost;
+  const cyclesContribution = (cyclesData[currentLevel - 1] ?? 0) * 2 * (levelData?.cost ?? 0);
   console.log("total cyclesCountribution:" + cyclesContribution);
-  const partnerContribution = currentPartner[currentLevel - 1] * levelData.cost;
+  const partnerContribution = (currentPartner[currentLevel - 1] ?? 0) * (levelData?.cost ?? 0);
   console.log("total partnerContribution:" + partnerContribution);
   const totalRevenue = cyclesContribution + partnerContribution;
   console.log("total totalRevenue:" + totalRevenue);
@@ -196,7 +197,7 @@ console.log("staticAddress:", staticAddress);
     <Suspense fallback={<div>Loading...</div>}>
 
 
-        <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id} />
+        <LevelHeader userid={userData?.id ?? 0} level={currentLevel} uplineId={uplineuserData?.id ?? 0} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
@@ -220,10 +221,10 @@ console.log("staticAddress:", staticAddress);
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
-                        className={`relative w-24 h-24 rounded-full ${i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
+                        className={`relative w-24 h-24 rounded-full ${currentPartner && currentPartner[currentLevel - 1] !== null && i < currentPartner[currentLevel - 1] ? 'bg-blue-600' : 'bg-gray-400'}`}
                       >
                         {/* Center User ID within the circle */}
-                        {i < currentPartner[currentLevel - 1] && partnerIds[currentLevel - 1]?.[i] && (
+                        {currentPartner?.[currentLevel - 1] != null && partnerIds?.[currentLevel - 1] != null && partnerIds[currentLevel - 1][i] != null && (
                           <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
                             {partnerIds[currentLevel - 1][i]}
                           </span>

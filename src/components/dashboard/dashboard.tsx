@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
-import { useWallet } from '@/components/nft/WalletContext';
+import { useWallet } from '@/app/context/WalletContext';
 
 interface StatCardProps {
   title: string;
@@ -38,18 +38,19 @@ const Dashboard: React.FC = () => {
   const { userX3Matrix, users, getUserIdsWalletaddress, getTeamSizeData, 
     usersActiveX3Levels,usersActiveX4Levels, 
     getTotalCycles,getPartnerCount,  } = useSmartContract();
-  const address = useWallet();
-  console.log("address:", address);
-
+  const walletAddress = useWallet();
+  
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
-  console.log("staticAddress:", staticAddress);
+  const staticAddress = walletAddress ? walletAddress.walletAddress : '';
+  const userWalletAddress = staticAddress;
+  console.log("staticAddress #12:", userWalletAddress);
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); 
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers
   const [partnerIds, setPartnerIds] = useState<(string | null)[][]>(Array(levels.length).fill([])); // State to hold partner IDs
+  const [partnersDataX4, setPartnersDataX4] = useState<number[]>(Array(levels.length).fill(0)); // Initialize with numbers for x4
   const [cyclesDataX3, setCyclesDataX3] = useState<(number | null)[]>(Array(levels.length).fill(null)); // Initialize with null or default values
 const [cyclesDataX4, setCyclesDataX4] = useState<(number | null)[]>(Array(levels.length).fill(null)); // Initialize for x4 similarly
 const [loading, setLoading] = useState(true);
@@ -59,7 +60,7 @@ const [activeProgram, setActiveProgram] = useState<string | null>(null);
 const [activeLevelsX3, setActiveLevelsX3] = useState<boolean[]>(Array(12).fill(false));
 const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(false));
   
-  const [userAddress, setUserAddress] = useState<string>(staticAddress); // Initially static address, will set to fetched address
+  const [userAddress, setUserAddress] = useState<string>(staticAddress || ''); // Initially static address, will set to fetched address
   const [userData, setUserData] = useState<{
     id: number;
     referrer: string;
@@ -76,11 +77,13 @@ const [activeLevelsX4, setActiveLevelsX4] = useState<boolean[]>(Array(12).fill(f
         try {
           const walletAddress = await getUserIdsWalletaddress(Number(userId));
           if (walletAddress) {
-            setUserAddress(walletAddress);
+            setUserAddress(staticAddress || 'null');
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(staticAddress); // Fallback to static address if fetching fails
+          if (staticAddress) {
+            setUserAddress(staticAddress); // Fallback to static address if fetching fails
+          }
         }
       }
     };
@@ -203,10 +206,10 @@ useEffect(() => {
       // Fetch partner data for matrix 1 (x3)
       const currentDataX3 = await Promise.all(
         levels.map(async (level) => {
-          const partnersInfo = await userX3Matrix(userAddress, level.level); // Matrix 1 for x3
+          const partnersInfo = await userX3Matrix(userAddress, level.level) as { [key: number]: any[] } | null; // Matrix 1 for x3
 
           if (partnersInfo && Array.isArray(partnersInfo[1])) {
-            const partnerAddresses = partnersInfo[1];
+            const partnerAddresses: string[] = partnersInfo[1];
             const partnerCount = partnerAddresses.length;
             console.log("partnerCount (x3):" + partnerCount);
             const userIds = await Promise.all(
@@ -218,7 +221,7 @@ useEffect(() => {
 
             setPartnerIds((prev) => {
               const newPartnerIds = [...prev];
-              newPartnerIds[level.level - 1] = userIds;
+              newPartnerIds[level.level - 1] = userIds.map(id => id !== null ? id.toString() : null);
               return newPartnerIds;
             });
 
@@ -232,7 +235,7 @@ useEffect(() => {
       // Fetch partner data for matrix 2 (x4)
       const currentDataX4 = await Promise.all(
         levels.map(async (level) => {
-          const partnersInfo = await userX3Matrix(userAddress, level.level); // Matrix 2 for x4
+          const partnersInfo = await userX3Matrix(userAddress, level.level) as { [key: number]: any[] } | null; // Matrix 2 for x4
 
           if (partnersInfo && Array.isArray(partnersInfo[1])) {
             const partnerAddresses = partnersInfo[1];
@@ -247,7 +250,7 @@ useEffect(() => {
 
             setPartnerIds((prev) => {
               const newPartnerIds = [...prev];
-              newPartnerIds[level.level - 1] = userIds;
+              newPartnerIds[level.level - 1] = userIds.map(id => id !== null ? id.toString() : null);
               return newPartnerIds;
             });
 
@@ -262,7 +265,7 @@ useEffect(() => {
       setcurrentPartnerX4(currentDataX4); // Set data for x4
       setCyclesDataX3(updatedCyclesX3); // Set cycles for x3
       setCyclesDataX4(updatedCyclesX4); // Set cycles for x4
-      setPartnersDataX3(updatedPartnersX3); // Set partners for x3
+      setPartnersData(updatedPartnersX3); // Set partners for x3
       setPartnersDataX4(updatedPartnersX4); // Set partners for x4
     } catch (error) {
       console.error('Error fetching data:', error);

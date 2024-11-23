@@ -2,22 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { fetchPartnerData, Partner } from "@/components/parteners/smartcontract/smartcontract";
-import { useWallet } from "@/components/nft/WalletContext";
+import { useWallet } from '@/app/context/WalletContext';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 const PartnerPage = () => {
   const { users } = useSmartContract();
-  const address = useWallet();
-  console.log("address:", address);
+  const walletAddress = useWallet();
+  console.log("address:", walletAddress);
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
+  const staticAddress = walletAddress ? walletAddress : null;
+
   console.log("staticAddress #1:", staticAddress);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!address) {
+      if (!walletAddress) {
         console.error("No address provided");
         setLoading(false);
         return;
@@ -25,7 +26,12 @@ const PartnerPage = () => {
 
       try {
         // Fetch user data using the address
-        const userData = await users(staticAddress as string);
+        if (typeof staticAddress !== 'string') {
+          console.error("Invalid address type");
+          setLoading(false);
+          return;
+        }
+        const userData = await users(staticAddress);
         if (!userData) {
           console.error("User data not found");
           setLoading(false);
@@ -44,7 +50,7 @@ const PartnerPage = () => {
     };
 
     loadData();
-  }, [address, users]); // Depend on address and users to re-fetch when they change
+  }, [staticAddress, users]); // Depend on address and users to re-fetch when they change
 
   return (
     <div className="container mx-auto  my-12 p-4 bg-white bg-opacity-80 dark:bg-gray-800 dark:bg-opacity-60 rounded-lg shadow-lg">

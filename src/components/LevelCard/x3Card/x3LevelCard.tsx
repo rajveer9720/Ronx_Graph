@@ -1,7 +1,7 @@
 // src/components/LevelCard/LevelCard.tsx
 'use client';
 import { useEffect, useState, Suspense  } from 'react';
-import { useWallet } from '@/components/nft/WalletContext';
+import { useWallet } from '@/app/context/WalletContext';
 import { useRouter,useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
@@ -15,13 +15,13 @@ interface LevelCardProps {
 
 const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount }) => {
   const router = useRouter();
-  const address = useWallet();
-  console.log("address:", address);
+  const walletAddress = useWallet();
+  console.log("address:", walletAddress);
 
   
-  // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
-  
+  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+  const userWalletAddress = staticAddress;
+
   console.log("staticAddress:", staticAddress);
   
 
@@ -41,15 +41,15 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
           const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
           if (walletAddress) {
             console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
-            setUserAddress(staticAddres); // Set the fetched wallet address
+            setUserAddress(userWalletAddress || 'null'); // Set the fetched wallet address
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(staticAddres); // Use static address if fetching fails
+          setUserAddress(userWalletAddress || 'null'); // Use static address if fetching fails
         }
       } else {
         // If no userId, use static wallet address
-        setUserAddress(staticAddres);
+        setUserAddress(userWalletAddress || 'null');  
       }
     };
 

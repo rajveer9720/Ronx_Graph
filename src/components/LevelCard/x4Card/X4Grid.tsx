@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './x4LevelCard'; // Ensure the path is correct
-import { useWallet } from '@/components/nft/WalletContext';
+import { useWallet } from '@/app/context/WalletContext';
 
 const levelDataX4 = [
   { level: 1, cost: 5 },
@@ -25,10 +25,11 @@ const levelDataX4 = [
 const X4Grid: React.FC = () => {
 
 
-  const address = useWallet();
-  console.log("address:", address);
+  const walletAddress = useWallet();
+  console.log("address:", walletAddress);
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
+  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+  const userWalletAddress = staticAddress
   console.log("staticAddress:", staticAddress);
   const { getTotalCycles, userX4Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
@@ -49,15 +50,15 @@ const X4Grid: React.FC = () => {
         try {
           const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
           if (walletAddress) {
-            setUserAddress(walletAddress); // Set the fetched wallet address
+            setUserAddress(userWalletAddress || 'null'); // Set the fetched wallet address
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(staticAddress); // Use static address if fetching fails
+          setUserAddress(userWalletAddress || 'null'); // Use static address if fetching fails
         }
       } else {
         // If no userId, use static wallet address
-        setUserAddress(staticAddress);
+        setUserAddress(userWalletAddress || 'null');
       }
     };
 
@@ -79,15 +80,15 @@ const X4Grid: React.FC = () => {
 
         const updatedPartners = await Promise.all(
           levelDataX4.map(async (data) => {
-            const partnersInfo = await userX4Matrix(userAddress, data.level); // Adjust function for x4
-            return partnersInfo[1].length; // Layer 1 partners
+            const partnersInfo: any = await userX4Matrix(userAddress, data.level); // Adjust function for x4
+            return partnersInfo && Array.isArray(partnersInfo[1]) ? partnersInfo[1].length : 0; // Layer 1 partners
           })
         );
 
         const updatedPartnerslayer2 = await Promise.all(
           levelDataX4.map(async (data) => {
-            const partnersInfo = await userX4Matrix(userAddress, data.level); // Adjust function for x4
-            return partnersInfo[2].length; // Layer 2 partners
+            const partnersInfo: any = await userX4Matrix(userAddress, data.level); // Adjust function for x4
+            return partnersInfo && Array.isArray(partnersInfo[2]) ? partnersInfo[2].length : 0; // Layer 2 partners
           })
         );
 
