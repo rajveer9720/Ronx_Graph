@@ -21,18 +21,23 @@ export async function POST(req: Request) {
       );
     }
 
+    // Connect to the database
     const { db } = await connectToDatabase();
 
     // Check if the user exists based on userWalletAddress
     const user = await db.collection("users").findOne({ userWalletAddress });
+
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     // Update the user's username in the database
     const result = await db.collection("users").updateOne(
       { userWalletAddress }, // Identifying user by wallet address
-      { $set: { username } }  // Only updating the username
+      { $set: { username } } // Only updating the username
     );
 
     if (result.modifiedCount === 0) {
@@ -43,9 +48,14 @@ export async function POST(req: Request) {
     }
 
     // Return success message
-    return NextResponse.json({ message: "Username updated successfully" });
-  } catch (error) {
-    console.error("Error during update:", error.message); // Log only the message part of the error for clarity
+    return NextResponse.json({
+      message: "Username updated successfully",
+    });
+
+  } catch (error: any) {
+    console.error("Error during update:", error.message); // Log only the error message for clarity
+
+    // Return error response with a generic message
     return NextResponse.json(
       { error: `An error occurred while updating the username: ${error.message}` },
       { status: 500 }

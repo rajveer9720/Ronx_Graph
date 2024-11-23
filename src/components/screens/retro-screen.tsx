@@ -27,12 +27,7 @@ export default function RetroScreen() {
       />
     </div>
     <div className="mx-auto  flex w-full shrink-0 flex-col md:px-4 xl:px-6 3xl:max-w-[1700px] 3xl:px-12">
-      <Avatar
-        size="xl"
-        image={authorData?.avatar?.thumbnail}
-        alt="Author"
-        className="z-10 mx-auto -mt-12 dark:border-gray-500 sm:-mt-14 md:mx-0 md:-mt-16 xl:mx-0 3xl:-mt-20"
-      />
+     
       <Profile />
     </div>
     <Dashboard/>

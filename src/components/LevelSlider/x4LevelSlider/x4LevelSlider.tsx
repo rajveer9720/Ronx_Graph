@@ -7,7 +7,7 @@ import TransactionTable from '@/components/transaction/transaction-table';
 import NotifyBot from '@/components/notifybot/notifybot';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider'; // Import the contract context
 import LevelTransection from '@/components/level_transection/level_transection';
-import { useWallet } from '@/components/nft/WalletContext'; // Import the wallet context
+import { useWallet } from '@/app/context/WalletContext'; // Import the wallet context
 const levels = [
   { level: 1, cost: 5 },
   { level: 2, cost: 10 },
@@ -25,10 +25,12 @@ const levels = [
 
 const LevelSliderx4: React.FC = () => {
   const searchParams = useSearchParams(); // Get search parameters from URL
-  const address = useWallet();
-  console.log("address:", address);
+  const walletAddress = useWallet();
+  console.log("address:", walletAddress);
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : null;
+  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+  const userWalletAddress = staticAddress;
+
   console.log("staticAddress:", staticAddress);
   const initialLevel = Number(searchParams.get('level')) || 1; // Get 'level' from URL, fallback to 1 if not present
   const [currentLevel, setCurrentLevel] = useState(initialLevel); // Use URL parameter for the initial state
@@ -135,13 +137,14 @@ const LevelSliderx4: React.FC = () => {
         // Fetch partner data for both layers
         const layer1Data = await Promise.all(
           levels.map(async (level) => {
-            const partnersInfo = await userX4Matrix(userAddress, level.level);
+            const partnersInfo = (await userX4Matrix(userAddress, level.level)) as unknown as any[] || [];
+            const partnersArray: any[] = Array.isArray(partnersInfo) ? partnersInfo : [];
             if (partnersInfo && Array.isArray(partnersInfo[1])) {
               const partnerAddressesLayer1 = partnersInfo[1];
               const userIdsLayer1 = await Promise.all(
                 partnerAddressesLayer1.map(async (address) => {
                   const userId = await fetchUserIdByAddress(address);
-                  return userId;
+                  return userId !== null ? userId.toString() : null;
                 })
               );
               setPartnerIdsLayer1((prev) => {
@@ -157,18 +160,18 @@ const LevelSliderx4: React.FC = () => {
 
         const layer2Data = await Promise.all(
           levels.map(async (level) => {
-            const partnersInfo = await userX4Matrix(userAddress, level.level);
+            const partnersInfo = (await userX4Matrix(userAddress, level.level) as unknown) as any[] || [];
             if (partnersInfo && Array.isArray(partnersInfo[2])) {
               const partnerAddressesLayer2 = partnersInfo[2];
               const userIdsLayer2 = await Promise.all(
                 partnerAddressesLayer2.map(async (address) => {
                   const userId = await fetchUserIdByAddress(address);
-                  return userId;
+                  return userId !== null ? userId.toString() : null;
                 })
               );
               setPartnerIdsLayer2((prev) => {
                 const newPartnerIds = [...prev];
-                newPartnerIds[level.level - 1] = userIdsLayer2;
+                newPartnerIds[level.level - 1] = userIdsLayer2 as (string | null)[];
                 return newPartnerIds;
               });
               return partnerAddressesLayer2.length;
@@ -203,14 +206,14 @@ const LevelSliderx4: React.FC = () => {
 
   const levelData = levels.find(level => level.level === currentLevel);
   const adjustedPartnersCount = partnersData[currentLevel - 1];
-  const cyclesContribution = cyclesData[currentLevel - 1] * 3 * levelData.cost;
-  const partnerContribution = Math.min(currentPartnerLayer2[currentLevel - 1], 3) * levelData.cost;
+  const cyclesContribution = (cyclesData[currentLevel - 1] ?? 0) * 3 * (levelData?.cost ?? 0);
+  const partnerContribution = levelData ? Math.min(currentPartnerLayer2[currentLevel - 1] ?? 0, 3) * levelData.cost : 0;
   const totalRevenue = cyclesContribution + partnerContribution;
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
 
-      <LevelHeader userid={userData?.id } level={currentLevel} uplineId={uplineuserData?.id}  />
+      <LevelHeader userid={userData?.id ?? 0} level={currentLevel} uplineId={uplineuserData?.id ?? 0}  />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
@@ -235,7 +238,7 @@ const LevelSliderx4: React.FC = () => {
                   {Array.from({ length: 2 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
-                        className={`relative w-24 h-24 rounded-full ${i < currentPartnerLayer1[currentLevel - 1] ? 'bg-blue-300' : 'bg-gray-400'
+                        className={`relative w-24 h-24 rounded-full ${i < (currentPartnerLayer1?.[currentLevel - 1] ?? 0) ? 'bg-blue-300' : 'bg-gray-400'
                           }`}
                       >
                         <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">
@@ -253,7 +256,7 @@ const LevelSliderx4: React.FC = () => {
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <div
-                        className={`relative w-24 h-24 rounded-full ${i < currentPartnerLayer2[currentLevel - 1] ? 'bg-blue-300' : 'bg-gray-400'
+                        className={`relative w-24 h-24 rounded-full ${i < (currentPartnerLayer2?.[currentLevel - 1] ?? 0) ? 'bg-blue-300' : 'bg-gray-400'
                           }`}
                       >
                         <span className="absolute inset-0 flex items-center justify-center font-bold text-lg">

@@ -17,7 +17,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { disconnect } = useDisconnect();
   const { data: balanceData } = useBalance({ address });
   const { chain } = useNetwork();
-
+  
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [networkId, setNetworkId] = useState<number | null>(null);

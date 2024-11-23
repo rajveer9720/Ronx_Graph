@@ -11,7 +11,11 @@ import { useBreakpoint } from '@/lib/hooks/use-breakpoint';
 import Image from '@/components/ui/image';
 import BusdBanner from '@/assets/images/BannerBUSD.png';
 
-const topPoolsLimit = (breakpoint) => {
+interface Breakpoint {
+  breakpoint: string;
+}
+
+const topPoolsLimit = (breakpoint: Breakpoint['breakpoint']): number => {
   switch (breakpoint) {
     case 'md':
     case '2xl':

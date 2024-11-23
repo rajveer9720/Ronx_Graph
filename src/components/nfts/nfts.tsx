@@ -47,7 +47,9 @@ export default function NFTS() {
       </div>
 
       <div className="m-4 sm:m-8 flex flex-col justify-center text-center items-center">
-        <h1 className="font-bold text-lg sm:text-2xl">You don't have a MEO WORLD NFT yet.</h1>
+        <h1 className="font-bold text-lg sm:text-2xl">
+          You don&apos;t have a MEO WORLD NFT yet.
+        </h1>
         <Button shape="rounded" className="mt-2 w-full sm:w-auto" style={{ background: 'linear-gradient(90.03deg,#e644f8 -8.27%,#9fa3ff 50.55%,#82d2ff 113.36%)' }}>Buy NFT</Button>
       </div>
     </div>
