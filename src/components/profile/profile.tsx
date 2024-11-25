@@ -35,6 +35,10 @@ export default function Profile() {
   const [newUsername, setNewUsername] = useState<string | null>('');
   const [newWalletAddress, setNewWalletAddress] = useState<string | null>('');
   const [profilePic, setProfilePic] = useState<string | null>('');
+
+  const [profileImage, setProfileImage] = useState<string>("/uploads/profile-picture.png"); // Default image
+  const wallet = useWallet(); // Wallet context
+
   // Handle Edit Button Click
   const handleEditClick = () => {
     setIsEditing(true);
@@ -61,7 +65,36 @@ export default function Profile() {
     }
   };
   
+  // Fetch profile picture dynamically based on wallet address
+  const fetchProfileImage = async () => {
+    if (!staticAddress) {
+      console.warn("Wallet address is not available.");
+      return;
+    }
 
+    try {
+      const response = await fetch(`/page/api/walletToProfilepic?wallet=${staticAddress}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Fetched Profile Data:", data);
+
+        // Ensure `profilePic` exists in the response
+        if (data.profilePic) {
+          setProfileImage(data.profilePic);
+        } else {
+          console.warn("Profile picture not found in the response.");
+        }
+      } else {
+        console.error(`Failed to fetch profile picture. Status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error fetching profile image:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileImage();
+  }, [staticAddress]);
   // Fetch User Data
   async function fetchUserDataByUserId(staticAddress: string) {
     try {
@@ -82,32 +115,37 @@ export default function Profile() {
 
 
   const handleSaveChanges = async () => {
-    // Ensure the user has entered a valid username and wallet address
     if (!newUsername || !newWalletAddress) {
       console.error("Username or wallet address is missing");
       return;
     }
   
+    // Prepare form data for the request
+    const formData = new FormData();
+    formData.append("userWalletAddress", newWalletAddress);
+    formData.append("username", newUsername);
+    if (profilePic) {
+      const blob = await fetch(profilePic).then((r) => r.blob());
+      formData.append("profilePic", blob, "profile.jpg");
+    }
+  
     try {
       const response = await fetch("/page/api/update-profile", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Set content type to JSON
-        },
-        body: JSON.stringify({
-          userWalletAddress: newWalletAddress, // Use the wallet address from the input
-          username: newUsername, // Username to update
-        }),
+        body: formData, // Use form data for file upload
       });
   
-      // Check if the response is in JSON format
+      // Handle response
       const contentType = response.headers.get("Content-Type");
       if (contentType && contentType.includes("application/json")) {
         const result = await response.json();
         if (response.ok) {
-          console.log("Profile updated:", result.message); // Log success
-          setIsEditing(false); // Close edit popup or perform necessary UI changes
+          console.log("Profile updated:", result.message);
+          setIsEditing(false);
+          fetchProfileImage();
           fetchUserDataByUserId(newWalletAddress); // Refetch user data
+          // alert success
+          // alert("Profile updated successfully!");
         } else {
           console.error("Error updating profile:", result.error);
         }
@@ -128,8 +166,10 @@ export default function Profile() {
       {/* User Information Section */}
       <Avatar
           size="xl"
-          image={authorData?.avatar?.thumbnail}
+          image={profileImage} // Dynamic profile image
           alt="Author"
+          width={100}
+          height={100}
           className="z-10 mx-auto -mt-12 dark:border-gray-500 sm:-mt-14 md:mx-0 md:-mt-16 xl:mx-0 3xl:-mt-20"
         />
       <div className="shrink-0 border-dashed border-gray-200 dark:border-gray-700 md:w-72 ltr:md:border-r md:ltr:pr-7 rtl:md:border-l md:rtl:pl-7 lg:ltr:pr-10 lg:rtl:pl-10">
