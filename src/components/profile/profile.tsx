@@ -2,11 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import userBanner from '@/assets/images/userBanner.png';
-import { useWallet } from '@/components/nft/WalletContext';
+import { useWallet } from '@/app/context/WalletContext';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import Avatar from '@/components/ui/avatar';
+// static data
+import { authorData } from '@/data/static/author';
 
 interface User {
   _id: string;
@@ -22,9 +25,8 @@ export default function Profile() {
   const walletAddress  = useWallet();
   const address = useWallet();
   console.log("address:", address);
-
   // Access the `address` field within the object, or handle undefined
-  const staticAddress = address?.address ? address.address.toString() : "not founded";
+  const staticAddress = walletAddress ? walletAddress.walletAddress : '';
   const addressnew = staticAddress;
 
   console.log("addressnew 1:", staticAddress);
@@ -34,6 +36,10 @@ export default function Profile() {
   const [newUsername, setNewUsername] = useState<string | null>('');
   const [newWalletAddress, setNewWalletAddress] = useState<string | null>('');
   const [profilePic, setProfilePic] = useState<string | null>('');
+
+  const [profileImage, setProfileImage] = useState<string>("/uploads/profile-picture.png"); // Default image
+  const wallet = useWallet(); // Wallet context
+
   // Handle Edit Button Click
   const handleEditClick = () => {
     setIsEditing(true);
@@ -60,11 +66,40 @@ export default function Profile() {
     }
   };
   
+  // Fetch profile picture dynamically based on wallet address
+  const fetchProfileImage = async () => {
+    if (!staticAddress) {
+      console.warn("Wallet address is not available.");
+      return;
+    }
 
-  // Fetch User Data
-  async function fetchUserDataByUserId(address: string) {
     try {
-      const response = await fetch(`/api/users?userWalletAddress=${address}`);
+      const response = await fetch(`/page/api/walletToProfilepic?wallet=${staticAddress}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Fetched Profile Data:", data);
+
+        // Ensure `profilePic` exists in the response
+        if (data.profilePic) {
+          setProfileImage(data.profilePic);
+        } else {
+          console.warn("Profile picture not found in the response.");
+        }
+      } else {
+        console.error(`Failed to fetch profile picture. Status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error fetching profile image:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileImage();
+  }, [staticAddress]);
+  // Fetch User Data
+  async function fetchUserDataByUserId(staticAddress: string) {
+    try {
+      const response = await fetch(`/page/api/users?userWalletAddress=${staticAddress}`);
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);  // Update user data state
@@ -76,37 +111,42 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    fetchUserDataByUserId(staticAddress);
+    fetchUserDataByUserId(staticAddress || 'null');
   }, [walletAddress]);
 
 
   const handleSaveChanges = async () => {
-    // Ensure the user has entered a valid username and wallet address
     if (!newUsername || !newWalletAddress) {
       console.error("Username or wallet address is missing");
       return;
     }
   
+    // Prepare form data for the request
+    const formData = new FormData();
+    formData.append("userWalletAddress", newWalletAddress);
+    formData.append("username", newUsername);
+    if (profilePic) {
+      const blob = await fetch(profilePic).then((r) => r.blob());
+      formData.append("profilePic", blob, "profile.jpg");
+    }
+  
     try {
-      const response = await fetch("/api/update-profile", {
+      const response = await fetch("/page/api/update-profile", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json", // Set content type to JSON
-        },
-        body: JSON.stringify({
-          userWalletAddress: newWalletAddress, // Use the wallet address from the input
-          username: newUsername, // Username to update
-        }),
+        body: formData, // Use form data for file upload
       });
   
-      // Check if the response is in JSON format
+      // Handle response
       const contentType = response.headers.get("Content-Type");
       if (contentType && contentType.includes("application/json")) {
         const result = await response.json();
         if (response.ok) {
-          console.log("Profile updated:", result.message); // Log success
-          setIsEditing(false); // Close edit popup or perform necessary UI changes
+          console.log("Profile updated:", result.message);
+          setIsEditing(false);
+          fetchProfileImage();
           fetchUserDataByUserId(newWalletAddress); // Refetch user data
+          // alert success
+          // alert("Profile updated successfully!");
         } else {
           console.error("Error updating profile:", result.error);
         }
@@ -125,11 +165,21 @@ export default function Profile() {
   return (
     <div className="flex flex-col w-full pt-4 md:flex-row md:pt-10 lg:pt-12">
       {/* User Information Section */}
+      <Avatar
+          size="xl"
+          image={profileImage} // Dynamic profile image
+          alt="Author"
+          width={100}
+          height={100}
+          className="z-10 mx-auto -mt-12 dark:border-gray-500 sm:-mt-14 md:mx-0 md:-mt-16 xl:mx-0 3xl:-mt-20"
+        />
       <div className="shrink-0 border-dashed border-gray-200 dark:border-gray-700 md:w-72 ltr:md:border-r md:ltr:pr-7 rtl:md:border-l md:rtl:pl-7 lg:ltr:pr-10 lg:rtl:pl-10">
         <div className="mx-auto mt-5 p-4 rounded-lg bg-white shadow-card dark:bg-light-dark md:mx-0 xl:mt-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">User Details       <button onClick={handleEditClick} className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">  <FontAwesomeIcon icon={faPencilAlt} />
-
-          </button></h3>
+         <h3> User Details: 
+          <button onClick={handleEditClick} className="text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+            <FontAwesomeIcon  icon={faPencilAlt as IconProp} />
+          </button>
+          </h3>
           <div className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
             <p><strong>ID:</strong> {user?.userid}</p>
             <p><strong>Username:</strong> {user?.username}</p>
