@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,7 +17,6 @@ const AccountPreview: React.FC = () => {
   };
 
   const handleDemoClick = () => {
-    // Handle demo action
     console.log('Demo clicked');
   };
 
