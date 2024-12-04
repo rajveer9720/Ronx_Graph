@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '@/components/ui/button/button';
 import Input from '@/components/ui/forms/input';
 import { useRouter } from 'next/navigation';
@@ -48,7 +48,6 @@ export default function SignUpForm() {
 
     setErrors(newErrors);
   }
-
   // Handle input changes and fetch wallet address if Upline ID is valid
   async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -61,28 +60,37 @@ export default function SignUpForm() {
 
     // Fetch wallet address if the Upline ID is valid
     if (name === 'UplineId' && /^\d+$/.test(value)) {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/page/api/idTowalletAddress?id=${value}`);
-        const data = await response.json();
-
-        if (response.ok) {
-          setUplineWallet(data.walletAddress); // Update wallet address state
-
-          console.log("Upline Wallet Address:", data.walletAddress);
-        } else {
-          setUplineWallet(null); // Clear wallet address if not found
-        }
-      } catch (error) {
-        console.error('Error fetching wallet address:', error);
-        setUplineWallet(null); // Handle fetch error
-      } finally {
-        setIsLoading(false);
-      }
+      fetchWalletAddress(value);
     } else {
       setUplineWallet(null); // Clear wallet address if input is invalid
     }
   }
+
+  // Fetch wallet address based on Upline ID
+  async function fetchWalletAddress(id: string) {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/page/api/idTowalletAddress?id=${id}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setUplineWallet(data.walletAddress); // Update wallet address state
+        console.log("Upline Wallet Address:", data.walletAddress);
+      } else {
+        setUplineWallet(null); // Clear wallet address if not found
+      }
+    } catch (error) {
+      console.error('Error fetching wallet address:', error);
+      setUplineWallet(null); // Handle fetch error
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Fetch wallet address for the default Upline ID on component mount
+  useEffect(() => {
+    fetchWalletAddress(formData.UplineId);
+  }, []);
 
   // Handle form submission and register
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -174,3 +182,5 @@ export default function SignUpForm() {
     </>
   );
 }
+
+
