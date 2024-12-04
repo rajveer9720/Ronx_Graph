@@ -1,11 +1,15 @@
 'use client';
-
 import { useState } from 'react';
 import Button from '@/components/ui/button/button';
 import Input from '@/components/ui/forms/input';
 import { useRouter } from 'next/navigation';
 import WalletStatus from '@/components/walletstatus/walletstatus';
 import { useWallet } from '@/app/context/WalletContext';
+import { ethers } from 'ethers';
+import { Web3Provider } from '@ethersproject/providers';
+import CONTRACT_ABI from '@/components/SmartContract/abi.json';
+
+const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5"; // Replace with actual contract address
 
 export default function SignUpForm() {
   const { walletAddress, balance } = useWallet();
@@ -21,6 +25,7 @@ export default function SignUpForm() {
 
   const [uplineWallet, setUplineWallet] = useState<string | null>(null); // State to store fetched wallet address
   const [isLoading, setIsLoading] = useState(false); // State for API loading
+  const [isRegistering, setIsRegistering] = useState(false); // State for registration loading
 
   // Validate fields
   function validateField(name: string, value: string) {
@@ -62,6 +67,8 @@ export default function SignUpForm() {
 
         if (response.ok) {
           setUplineWallet(data.walletAddress); // Update wallet address state
+
+          console.log("Upline Wallet Address:", data.walletAddress);
         } else {
           setUplineWallet(null); // Clear wallet address if not found
         }
@@ -76,14 +83,45 @@ export default function SignUpForm() {
     }
   }
 
-  // Handle form submission
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Handle form submission and register
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
+    
     // Check if there are no validation errors
     if (Object.values(errors).every((x) => x === '') && formData.UplineId) {
-      console.log('Form submitted:', formData, 'Upline Wallet:', uplineWallet);
-      router.push('/retro');
+      // if (!uplineWallet) {
+      //   setErrors({ ...errors, UplineId: 'Please provide a valid Upline wallet address.' });
+      //   return;
+      // }
+
+      // Begin registration process
+      try {
+        setIsRegistering(true);
+        
+        // Ensure the user is connected to MetaMask or an Ethereum-compatible wallet
+        if (typeof window.ethereum === 'undefined') {
+          alert('Please install MetaMask or another Ethereum wallet extension');
+          return;
+        }
+
+        const provider = new Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+        console.log('test wallet address:', walletAddress);
+        console.log('test upline wallet address:', uplineWallet);
+        // Register with the Upline wallet address and user's wallet address
+        const tx = await contract.registrationFor( walletAddress, uplineWallet);
+        await tx.wait(); // Wait for the transaction to be mined
+
+        alert('Registration successful!');
+        router.push('/retro'); // Redirect after successful registration
+      } catch (error: any) {
+        console.error('Registration failed:', error);
+        alert('Failed to register. Check the console for details.');
+      } finally {
+        setIsRegistering(false);
+      }
     }
   }
 
@@ -127,8 +165,9 @@ export default function SignUpForm() {
         <Button
           type="submit"
           className="mt-5 rounded-lg !text-sm uppercase tracking-[0.04em]"
+          disabled={isRegistering}
         >
-          Sign Up
+          {isRegistering ? 'Registering...' : 'Sign Up'}
         </Button>
       </form>
     </>
