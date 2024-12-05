@@ -9,11 +9,13 @@ import { useWallet } from '@/app/context/WalletContext';
 import { ethers } from 'ethers';
 import { Web3Provider } from '@ethersproject/providers';
 import CONTRACT_ABI from '@/components/SmartContract/abi.json';
+import {useSmartContract}  from '@/components/SmartContract/SmartContractProvider';
 
 const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5"; // Replace with actual contract address
 
 export default function SignUpForm() {
   const { walletAddress, balance } = useWallet();
+  const {transferTokens  } = useSmartContract();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -116,8 +118,11 @@ export default function SignUpForm() {
         const provider = new Web3Provider(window.ethereum);
         const signer = provider.getSigner();
         const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-        console.log('test wallet address:', walletAddress);
+        
+        // Transfer tokens to the contract
+        const tokenVerification = await transferTokens(CONTRACT_ADDRESS,"0.0002");
+        console.log('test tokenVerification:', tokenVerification);
+      console.log('test wallet address:', walletAddress);
         console.log('test upline wallet address:', uplineWallet);
         // Register with the Upline wallet address and user's wallet address
         const tx = await contract.registrationFor( walletAddress, uplineWallet);

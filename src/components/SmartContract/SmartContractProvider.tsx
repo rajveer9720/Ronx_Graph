@@ -3,28 +3,36 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "@/components/SmartContract/abi.json";
+import TOKEN_ABI from "@/components/SmartContract/tokenabi.json";
 import axios from "axios";
+import { Web3Provider } from "@ethersproject/providers";
 
 const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5";
-const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c"; 
-
+const TOKEN_CONTRACT_ADDRESS = "0x0d59F11176CA41c7EcCbf6c10E357f8dCcA75a09"; // Replace with actual token address
+const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c";
 
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;
   writeData: (methodName: string, ...params: any[]) => Promise<any | null>;
-  users: (userAddress: string) => Promise<{ id: number; referrer: string; partnersCount: number; registrationTime: number } | null>;
+  users: (userAddress: string) => Promise<{
+    id: number;
+    referrer: string;
+    partnersCount: number;
+    registrationTime: number;
+  } | null>;
   usersActiveX3Levels: (userAddress: string, level: number) => Promise<boolean | null>;
   usersActiveX4Levels: (userAddress: string, level: number) => Promise<boolean | null>;
   userX3Matrix: (userAddress: string, level: number) => Promise<number | null>;
   userX4Matrix: (userAddress: string, level: number) => Promise<number | null>;
   getPartnerCount: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
   getTotalCycles: (userAddress: string, matrix: number, level: number) => Promise<number | null>;
-  getUserRecentActivityUserMatrics: (timesteamp:number, uint: string) => Promise<number | null>;
+  getUserRecentActivityUserMatrics: (timestamp: number, unit: string) => Promise<number | null>;
   getTeamSizeData: (userAddress: string) => Promise<number | null>;
-  getPlatformRecentActivity: ()=> Promise<number |null>;
+  getPlatformRecentActivity: () => Promise<number | null>;
   getUserIdsWalletaddress: (userid: number) => Promise<number | null>;
-  getDetailedMatrixInfo: (userid: number, Matrix: number, Level: number) => Promise<number | null>;
-  registrationFor(useraddress: string, referrer: string): Promise<any | null>;
+  getDetailedMatrixInfo: (userid: number, matrix: number, level: number) => Promise<number | null>;
+  registrationFor: (useraddress: string, referrer: string) => Promise<any | null>;
+  transferTokens: (useraddress: string, amount: string) => Promise<void>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -33,23 +41,31 @@ const SmartContractContext = createContext<SmartContractContextType | undefined>
 export const SmartContractProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [provider, setProvider] = useState<ethers.providers.JsonRpcProvider | null>(null);
   const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [tokenContract, setTokenContract] = useState<ethers.Contract | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      try {
-        const infuraProvider = new ethers.providers.JsonRpcProvider(`https://bsc-testnet.infura.io/v3/${INFURA_PROJECT_ID}`);
-        setProvider(infuraProvider);
-        const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, abi, infuraProvider);
-        setContract(contractInstance);
-      } catch (error) {
-        console.error("Error initializing provider or contract:", error);
+      if (typeof window !== "undefined" && window.ethereum) {
+        try {
+          const web3Provider = new Web3Provider(window.ethereum);
+          const signer = web3Provider.getSigner();
+          const infuraProvider = new ethers.providers.JsonRpcProvider(
+            `https://bsc-testnet.infura.io/v3/${INFURA_PROJECT_ID}`
+          );
+          setProvider(infuraProvider);
+          const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, abi, infuraProvider);
+          const tokenContractInstance = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_ABI, signer);
+          setTokenContract(tokenContractInstance);
+          setContract(contractInstance);
+        } catch (error) {
+          console.error("Error initializing provider or contract:", error);
+        }
       }
     };
     init();
   }, []);
-  
 
-
+ 
   
 
 
@@ -286,6 +302,26 @@ const registrationFor = async (userAddress: string, referrer: string) => {
     return null;
   }
 };
+const transferTokens = async (useraddress: string, amount: string ) => {
+  if (!provider) throw new Error("No provider available");
+
+  try {
+    // Get the signer from the provider
+
+    // Execute the transfer function
+    if (!tokenContract) {
+      throw new Error("Token contract is not initialized");
+    }
+    const tx = await tokenContract.approve(useraddress, ethers.utils.parseEther(amount));
+    await tx.wait();
+
+    console.log("Tokens transferred successfully:", tx);
+  } catch (error) {
+    console.error("Error during token transfer:", error);
+    throw new Error("Failed to transfer tokens.");
+  }
+};
+
 
 
   return (
@@ -306,6 +342,7 @@ const registrationFor = async (userAddress: string, referrer: string) => {
         getTeamSizeData,
         getDetailedMatrixInfo,
         registrationFor,
+        transferTokens,
         provider,
       }}
     >
