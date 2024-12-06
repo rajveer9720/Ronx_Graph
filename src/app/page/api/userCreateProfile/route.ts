@@ -26,27 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch the last inserted userId and increment by 1
-    //fetch number of users
-    //last user fetch userId
-    //increment userId by 1
-    const lastUser = await db.collection("users").find().sort({ userId: -1 }).limit(1).toArray();
-    console.log("Last User:", lastUser); // Log the last user for debugging
-    // Ensure userId is a valid number before incrementing
-    const lastUserId = lastUser.length > 0 ? Number(lastUser[0].userId) : 0; // Fallback to 0 if no users exist
-    console.log("Last UserId (converted to number):", lastUserId); // Log the converted userId for debugging
 
-    const newUserId = lastUserId + 1; // Increment the last userId by 1
-    console.log("New UserId to be assigned:", newUserId); // Log the new userId
-
-    // If newUserId is not a valid number, throw an error
-    if (isNaN(newUserId)) {
-      console.error("Invalid userId generated:", newUserId); // Add log to track invalid IDs
-      return NextResponse.json(
-        { error: "Invalid userId generated." },
-        { status: 500 }
-      );
-    }
 
     // Insert the user into the database with the new userId
     const result = await db.collection("users").insertOne({
