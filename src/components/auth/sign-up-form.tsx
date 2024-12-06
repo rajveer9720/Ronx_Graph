@@ -129,7 +129,33 @@ export default function SignUpForm() {
         await tx.wait(); // Wait for the transaction to be mined
 
         alert('Registration successful!');
-        router.push('/retro'); // Redirect after successful registration
+      //      // Static data for user profile creation
+      const staticProfileData = {
+        userWalletAddress: walletAddress, // Make sure this is the user's connected wallet address
+        profilePic: "/uploads/default_pic.jpg", // Replace with a valid URL
+        personalLink: "https://example.com", // Replace with a valid personal link
+        username: "Username", // Replace with a username
+      };
+  
+      // Send a POST request to create the user profile
+      const response = await fetch("/page/api/userCreateProfile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(staticProfileData),
+      });
+  
+      const result = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create profile.");
+      }
+  
+      alert(`Profile created successfully: ${result.message}`);
+      console.log("User ID:", result.userId);
+  
+        // router.push('/retro'); // Redirect after successful registration
       } catch (error: any) {
         console.error('Registration failed:', error);
         alert('Failed to register. Check the console for details.');
