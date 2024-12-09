@@ -1,8 +1,9 @@
 // src/components/LevelCard/LevelCard.tsx
 'use client';
-import { useEffect, useState, Suspense  } from 'react';
+
+import { useEffect, useState, Suspense } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { useRouter,useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 
 interface LevelCardProps {
@@ -11,61 +12,48 @@ interface LevelCardProps {
   partners: number;
   cycles: number | null; // Allow cycles to be null initially
   partnersCount: number; // Number of partners for level
+  isActive: boolean; // Indicates if the level is active
 }
 
-const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount }) => {
+const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, partnersCount, isActive }) => {
   const router = useRouter();
   const walletAddress = useWallet();
-  console.log("address:", walletAddress);
-
-  
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
   const userWalletAddress = staticAddress;
 
-  console.log("staticAddress:", staticAddress);
-  
-
-
-  const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
-
+  const { getUserIdsWalletaddress } = useSmartContract();
   const searchParams = useSearchParams();
+  const userId = searchParams.get('userId');
+  const [userAddress, setUserAddress] = useState<string>('');
 
-  const userId = searchParams.get('userId'); // Extract userId from query parameters
-  console.log("user id:",userId);
-  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
-   // Fetch user wallet address if userId is provided, else use static address
-   useEffect(() => {
+  // Fetch user wallet address if userId is provided, else use static address
+  useEffect(() => {
     const fetchUserAddress = async () => {
       if (userId) {
         try {
-          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
-          if (walletAddress) {
-            console.log("Fetched wallet address:", walletAddress); // Log the fetched address for debugging
-            setUserAddress(userWalletAddress || 'null'); // Set the fetched wallet address
-          }
+          const fetchedAddress = await getUserIdsWalletaddress(Number(userId));
+          setUserAddress(String(fetchedAddress) || userWalletAddress || 'null');
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(userWalletAddress || 'null'); // Use static address if fetching fails
+          setUserAddress(userWalletAddress || 'null');
         }
       } else {
-        // If no userId, use static wallet address
-        setUserAddress(userWalletAddress || 'null');  
+        setUserAddress(userWalletAddress || 'null');
       }
     };
 
     fetchUserAddress();
-  }, [userId, getUserIdsWalletaddress]);
-
-
-
+  }, [userId, getUserIdsWalletaddress, userWalletAddress]);
 
   const handleClick = () => {
-    const userIdParam = userId ? `&userId=${userId}` : ''; // Append userId if it exists
-
-    router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}`);
+    if (isActive) {
+      const userIdParam = userId ? `&userId=${userId}` : '';
+      router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}${userIdParam}`);
+    } else {
+      alert('This level is inactive. Please activate it first!');
+    }
   };
 
-  // Generate partner circles with conditional coloring
   const renderPartnerCircles = () => {
     const circles = [];
 
@@ -73,7 +61,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
       circles.push(
         <div
           key={i}
-          className={`w-10 h-10 rounded-full ${i < partnersCount ? 'bg-blue-600' : 'bg-gray-400'}`} // Blue if i < partnersCount, else gray
+          className={`w-10 h-10 rounded-full ${i < partnersCount ? 'bg-blue-600' : 'bg-gray-400'}`}
         ></div>
       );
     }
@@ -83,29 +71,34 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-
-    <div
-      className="bg-blue-700 p-4 rounded-lg text-center border border-gray-600 relative cursor-pointer"
-      onClick={handleClick}
-    >
-      <div className="flex justify-between mb-4">
-        <div className="text-xl font-bold">Lvl {level}</div>
-        <div className="text-lg">{cost} BUSD</div>
-      </div>
-      <div className="flex gap-4 justify-center space-x-210 my-10">
-        {renderPartnerCircles()}
-      </div>
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center">
-          <span className="mr-2">👥</span> {partners}
+      <div
+        className={`bg-blue-700 p-4 rounded-lg text-center border border-gray-600 relative cursor-pointer ${
+          isActive ? '' : 'opacity-50 pointer-events-none'
+        }`}
+        onClick={handleClick}
+      >
+        <div className="flex justify-between mb-4">
+          <div className="text-xl font-bold">Lvl {level}</div>
+          <div className="text-lg">{cost} BUSD</div>
         </div>
-        <div className="flex items-center">
-          <span className="mr-2">🔄</span> {cycles !== null ? cycles : 'Loading...'}
+        <div className="flex gap-4 justify-center space-x-210 my-10">
+          {renderPartnerCircles()}
         </div>
+        <div className="flex justify-between mb-4">
+          <div className="flex items-center">
+            <span className="mr-2">👥</span> {partners}
+          </div>
+          <div className="flex items-center">
+            <span className="mr-2">🔄</span> {cycles !== null ? cycles : 'Loading...'}
+          </div>
+        </div>
+        {!isActive && (
+          <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
+            Inactive
+          </div>
+        )}
       </div>
-    </div>
     </Suspense>
-
   );
 };
 
