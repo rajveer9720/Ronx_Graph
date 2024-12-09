@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState,Suspense  } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
-import LevelCard from './x4LevelCard'; // Ensure the path is correct
+import LevelCard from './x4LevelCard';
 import { useWallet } from '@/app/context/WalletContext';
 
 const levelDataX4 = [
@@ -23,24 +23,19 @@ const levelDataX4 = [
 ];
 
 const X4Grid: React.FC = () => {
-
-
   const walletAddress = useWallet();
-  console.log("address:", walletAddress);
-  // Access the `address` field within the object, or handle undefined
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
-  const userWalletAddress = staticAddress
-  console.log("staticAddress:", staticAddress);
+  const userWalletAddress = staticAddress;
   const { getTotalCycles, userX4Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [partnersDatalayer2, setPartnersDatalayer2] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [partnerNew, setPartnerNew] = useState<number[]>(Array(levelDataX4.length).fill(0));
-  
+
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId'); // Extract userId from query parameters
-  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
- 
+  const userId = searchParams.get('userId');
+  const [userAddress, setUserAddress] = useState<string>('');
+
   const matrix = 2; // x4 matrix
 
   // Fetch user wallet address if userId is provided, else use static address
@@ -48,16 +43,15 @@ const X4Grid: React.FC = () => {
     const fetchUserAddress = async () => {
       if (userId) {
         try {
-          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
+          const walletAddress = await getUserIdsWalletaddress(Number(userId));
           if (walletAddress) {
-            setUserAddress(userWalletAddress || 'null'); // Set the fetched wallet address
+            setUserAddress(userWalletAddress || 'null');
           }
         } catch (error) {
           console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(userWalletAddress || 'null'); // Use static address if fetching fails
+          setUserAddress(userWalletAddress || 'null');
         }
       } else {
-        // If no userId, use static wallet address
         setUserAddress(userWalletAddress || 'null');
       }
     };
@@ -67,7 +61,7 @@ const X4Grid: React.FC = () => {
 
   // Fetch cycles and partners data when userAddress is set
   useEffect(() => {
-    if (!userAddress) return; // Wait for userAddress to be set
+    if (!userAddress) return;
 
     const fetchCyclesAndPartnersData = async () => {
       try {
@@ -80,15 +74,15 @@ const X4Grid: React.FC = () => {
 
         const updatedPartners = await Promise.all(
           levelDataX4.map(async (data) => {
-            const partnersInfo: any = await userX4Matrix(userAddress, data.level); // Adjust function for x4
-            return partnersInfo && Array.isArray(partnersInfo[1]) ? partnersInfo[1].length : 0; // Layer 1 partners
+            const partnersInfo: any = await userX4Matrix(userAddress, data.level);
+            return partnersInfo && Array.isArray(partnersInfo[1]) ? partnersInfo[1].length : 0;
           })
         );
 
         const updatedPartnerslayer2 = await Promise.all(
           levelDataX4.map(async (data) => {
-            const partnersInfo: any = await userX4Matrix(userAddress, data.level); // Adjust function for x4
-            return partnersInfo && Array.isArray(partnersInfo[2]) ? partnersInfo[2].length : 0; // Layer 2 partners
+            const partnersInfo: any = await userX4Matrix(userAddress, data.level);
+            return partnersInfo && Array.isArray(partnersInfo[2]) ? partnersInfo[2].length : 0;
           })
         );
 
@@ -111,30 +105,28 @@ const X4Grid: React.FC = () => {
   }, [userAddress, getTotalCycles, userX4Matrix, getPartnerCount]);
 
   return (
-
     <Suspense fallback={<div>Loading...</div>}>
-
-    <div className="p-5 min-h-screen text-white">
-      <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-5">Ronx x4</h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
-          {levelDataX4.map((data, index) => (
-            <LevelCard
-              key={data.level}
-              level={data.level}
-              cost={data.cost}
-              partners={partnerNew[index]} // Total partners
-              cycles={cyclesData[index]}
-              partnersCount={partnersData[index]} // Layer 1 partners
-              partnersCountlayer2={partnersDatalayer2[index]} // Layer 2 partners
-            />
-          ))}
+      <div className="p-5 min-h-screen text-white">
+        <div className="container mx-auto">
+          <h1 className="text-3xl font-bold mb-5">Ronx x4</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4 rounded-lg border border-gray-700">
+            {levelDataX4.map((data, index) => (
+              <LevelCard
+                key={data.level}
+                level={data.level}
+                cost={data.cost}
+                partners={partnerNew[index]}
+                cycles={cyclesData[index]}
+                partnersCount={partnersData[index]}
+                partnersCountlayer2={partnersDatalayer2[index]}
+                isActive={partnersData[index] > 0} // Check if level is active based on partners
+              />
+            ))}
+          </div>
         </div>
+        <NotifyBot />
       </div>
-      <NotifyBot />
-    </div>
-        </Suspense>
-
+    </Suspense>
   );
 };
 
