@@ -33,6 +33,7 @@ interface SmartContractContextType {
   getDetailedMatrixInfo: (userid: number, matrix: number, level: number) => Promise<number | null>;
   registrationFor: (useraddress: string, referrer: string) => Promise<any | null>;
   transferTokens: (useraddress: string, amount: string) => Promise<void>;
+  buyNewLevel: ( matrix: number, level: number) => Promise<any | null>;
   provider: ethers.providers.JsonRpcProvider | null;
 }
 
@@ -322,7 +323,43 @@ const transferTokens = async (useraddress: string, amount: string ) => {
   }
 };
 
+// Buy new level function to buy new level
+const buyNewLevel = async (matrix: number, level: number) => {
+  if (!provider) {
+    console.error("No provider available");
+    return null;
+  }
+  try{
+    // Request accounts and check connection
+    await provider.send("eth_requestAccounts", []);
+    const accounts = await provider.listAccounts();
+    if (accounts.length === 0) {
+      throw new Error("No accounts found. Please connect a wallet.");
+    }
 
+    // Get signer
+    const signer = provider.getSigner();
+    console.log("Signer Address:", await signer.getAddress());
+    if(!contract) {
+      throw new Error("Contract is not initialized");
+    }
+    // Connect contract to signer
+    const contractWithSigner = contract.connect(signer);
+
+    // Define the payable value (adjust as needed)
+    const value = ethers.utils.parseEther("0.1");
+
+    // Call the registration function
+    const tx = await contractWithSigner.buyNewLevel(matrix, level, { value });
+    await tx.wait();
+
+    console.log("Registration successful:", tx);
+    return tx;
+  }catch(error){
+    console.error("Error buying new level:", error);
+    return null;
+  }
+}
 
   return (
     <SmartContractContext.Provider
@@ -343,6 +380,7 @@ const transferTokens = async (useraddress: string, amount: string ) => {
         getDetailedMatrixInfo,
         registrationFor,
         transferTokens,
+        buyNewLevel,
         provider,
       }}
     >

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './x4LevelCard';
@@ -23,89 +23,75 @@ const levelDataX4 = [
 ];
 
 const X4Grid: React.FC = () => {
-  const walletAddress = useWallet();
-  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
-  const userWalletAddress = staticAddress;
-  const { getTotalCycles, userX4Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
+  const { walletAddress } = useWallet();
+  const {
+    getTotalCycles,
+    userX4Matrix,
+    getPartnerCount,
+    usersActiveX4Levels,
+    getUserIdsWalletaddress,
+  } = useSmartContract();
+
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
-  const [partnersDatalayer2, setPartnersDatalayer2] = useState<number[]>(Array(levelDataX4.length).fill(0));
-  const [partnerNew, setPartnerNew] = useState<number[]>(Array(levelDataX4.length).fill(0));
+  const [partnersLayer2Data, setPartnersLayer2Data] = useState<number[]>(Array(levelDataX4.length).fill(0));
+  const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
+  const [userAddress, setUserAddress] = useState<string>(walletAddress || '');
 
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
-  const [userAddress, setUserAddress] = useState<string>('');
 
-  const matrix = 2; // x4 matrix
-
-  // Fetch user wallet address if userId is provided, else use static address
   useEffect(() => {
     const fetchUserAddress = async () => {
       if (userId) {
         try {
-          const walletAddress = await getUserIdsWalletaddress(Number(userId));
-          if (walletAddress) {
-            setUserAddress(userWalletAddress || 'null');
-          }
+          const fetchedAddress = await getUserIdsWalletaddress(Number(userId));
+          setUserAddress(fetchedAddress || walletAddress || '');
         } catch (error) {
-          console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(userWalletAddress || 'null');
+          console.error('Error fetching wallet address:', error);
         }
-      } else {
-        setUserAddress(userWalletAddress || 'null');
       }
     };
-
     fetchUserAddress();
-  }, [userId, getUserIdsWalletaddress, staticAddress]);
+  }, [userId, getUserIdsWalletaddress, walletAddress]);
 
-  // Fetch cycles and partners data when userAddress is set
   useEffect(() => {
-    if (!userAddress) return;
+    const fetchLevelData = async () => {
+      if (!userAddress) return;
 
-    const fetchCyclesAndPartnersData = async () => {
       try {
-        const updatedCycles = await Promise.all(
+        const activeLevels = await Promise.all(
+          levelDataX4.map((data) => usersActiveX4Levels(userAddress, data.level))
+        );
+
+        const cycles = await Promise.all(
+          levelDataX4.map((data) => getTotalCycles(userAddress, 1, data.level))
+        );
+
+        const partners = await Promise.all(
           levelDataX4.map(async (data) => {
-            const cycles = await getTotalCycles(userAddress, matrix, data.level);
-            return cycles;
+            const matrix = await userX4Matrix(userAddress, data.level);
+            return matrix[1]?.length || 0;
           })
         );
 
-        const updatedPartners = await Promise.all(
-          levelDataX4.map(async (data) => {
-            const partnersInfo: any = await userX4Matrix(userAddress, data.level);
-            return partnersInfo && Array.isArray(partnersInfo[1]) ? partnersInfo[1].length : 0;
-          })
+        const partnersLayer2 = await Promise.all(
+          levelDataX4.map((data) => getPartnerCount(userAddress, 1, data.level))
         );
 
-        const updatedPartnerslayer2 = await Promise.all(
-          levelDataX4.map(async (data) => {
-            const partnersInfo: any = await userX4Matrix(userAddress, data.level);
-            return partnersInfo && Array.isArray(partnersInfo[2]) ? partnersInfo[2].length : 0;
-          })
-        );
-
-        const partnersCount = await Promise.all(
-          levelDataX4.map(async (data) => {
-            return await getPartnerCount(userAddress, matrix, data.level) || 0;
-          })
-        );
-
-        setCyclesData(updatedCycles);
-        setPartnersData(updatedPartners);
-        setPartnersDatalayer2(updatedPartnerslayer2);
-        setPartnerNew(partnersCount);
+        setIsActiveLevels(activeLevels.map(Boolean));
+        setCyclesData(cycles.map((cycle) => cycle || 0));
+        setPartnersData(partners);
+        setPartnersLayer2Data(partnersLayer2.map((count) => count || 0));
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching level data:', error);
       }
     };
-
-    fetchCyclesAndPartnersData();
-  }, [userAddress, getTotalCycles, userX4Matrix, getPartnerCount]);
+    fetchLevelData();
+  }, [userAddress, getTotalCycles, userX4Matrix, getPartnerCount, usersActiveX4Levels]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="text-center text-gray-400">Loading levels...</div>}>
       <div className="p-5 min-h-screen text-white">
         <div className="container mx-auto">
           <h1 className="text-3xl font-bold mb-5">Ronx x4</h1>
@@ -115,11 +101,11 @@ const X4Grid: React.FC = () => {
                 key={data.level}
                 level={data.level}
                 cost={data.cost}
-                partners={partnerNew[index]}
+                partners={partnersData[index]}
                 cycles={cyclesData[index]}
                 partnersCount={partnersData[index]}
-                partnersCountlayer2={partnersDatalayer2[index]}
-                isActive={partnersData[index] > 0} // Check if level is active based on partners
+                partnersCountlayer2={partnersLayer2Data[index]}
+                isActive={isActiveLevels[index]}
               />
             ))}
           </div>

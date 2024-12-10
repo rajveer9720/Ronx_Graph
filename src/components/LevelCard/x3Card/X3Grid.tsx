@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './x3LevelCard'; // Ensure the path is correct
@@ -23,50 +23,49 @@ const levelDataX3 = [
 ];
 
 const X3Grid: React.FC = () => {
-  const walletAddress = useWallet();
-  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
-  const userWalletAddress = staticAddress;
-  const { getTotalCycles, userX3Matrix, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
+  const walletContext = useWallet();
+  const staticAddress = walletContext ? walletContext.walletAddress : null;
+  const { getTotalCycles, userX3Matrix, usersActiveX3Levels, getPartnerCount, getUserIdsWalletaddress } = useSmartContract();
 
-  const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX3.length).fill(null));
+  const [cyclesData, setCyclesData] = useState<number[]>(Array(levelDataX3.length).fill(0));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX3.length).fill(0));
   const [partnerNew, setPartnerNew] = useState<number[]>(Array(levelDataX3.length).fill(0));
   const [isLevelActive, setIsLevelActive] = useState<boolean[]>(Array(levelDataX3.length).fill(false));
 
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Extract userId from query parameters
-  const [userAddress, setUserAddress] = useState<string>(''); // Initially empty, will set to static or fetched address
+  const [userAddress, setUserAddress] = useState<string>(staticAddress || '');
 
   // Fetch user wallet address if userId is provided, else use static address
   useEffect(() => {
     const fetchUserAddress = async () => {
       if (userId) {
         try {
-          const walletAddress = await getUserIdsWalletaddress(Number(userId)); // Ensure userId is treated as a number
-          setUserAddress(walletAddress || userWalletAddress || 'null');
+          const fetchedAddress = await getUserIdsWalletaddress(Number(userId));
+          setUserAddress(String(fetchedAddress) || staticAddress || '');
         } catch (error) {
-          console.error("Error fetching wallet address for userId:", error);
-          setUserAddress(userWalletAddress || 'null');
+          console.error('Error fetching wallet address for userId:', error);
+          setUserAddress(staticAddress || '');
         }
       } else {
-        setUserAddress(userWalletAddress || 'null');
+        setUserAddress(staticAddress || '');
       }
     };
-
     fetchUserAddress();
   }, [userId, getUserIdsWalletaddress, staticAddress]);
 
-  // Fetch cycles, partners, and level activity data when userAddress is set
+  // Fetch active levels, cycles, and partner data
   useEffect(() => {
     if (!userAddress) return;
 
     const fetchData = async () => {
       try {
+        const activeLevels = await Promise.all(
+          levelDataX3.map((data) => usersActiveX3Levels(userAddress, data.level))
+        );
+
         const updatedCycles = await Promise.all(
-          levelDataX3.map(async (data) => {
-            const cycles = await getTotalCycles(userAddress, 1, data.level); // Matrix 1 for x3
-            return cycles;
-          })
+          levelDataX3.map((data) => getTotalCycles(userAddress, 1, data.level))
         );
 
         const updatedPartners = await Promise.all(
@@ -78,28 +77,22 @@ const X3Grid: React.FC = () => {
 
         const partnersCount = await Promise.all(
           levelDataX3.map(async (data) => {
-            return await getPartnerCount(userAddress, 1, data.level) || 0;
+            const count = await getPartnerCount(userAddress, 1, data.level);
+            return count !== null ? count : 0;
           })
         );
 
-        const activeLevels = await Promise.all(
-          levelDataX3.map(async (data) => {
-            const cycles = await getTotalCycles(userAddress, 1, data.level);
-            return cycles > 0; // Mark as active if cycles > 0
-          })
-        );
-
-        setCyclesData(updatedCycles);
+        setPartnerNew(partnersCount.map(count => count !== null ? count : 0));
+        setCyclesData(updatedCycles.map((cycles) => cycles || 0));
         setPartnersData(updatedPartners);
         setPartnerNew(partnersCount);
-        setIsLevelActive(activeLevels);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
 
     fetchData();
-  }, [userAddress, getTotalCycles, userX3Matrix, getPartnerCount]);
+  }, [userAddress, usersActiveX3Levels, getTotalCycles, userX3Matrix, getPartnerCount]);
 
   return (
     <div className="p-5 min-h-screen text-white">
