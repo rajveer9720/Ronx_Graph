@@ -46,7 +46,7 @@ const X4Grid: React.FC = () => {
       if (userId) {
         try {
           const fetchedAddress = await getUserIdsWalletaddress(Number(userId));
-          setUserAddress(fetchedAddress || walletAddress || '');
+          setUserAddress(String(fetchedAddress) || walletAddress || '');
         } catch (error) {
           console.error('Error fetching wallet address:', error);
         }
