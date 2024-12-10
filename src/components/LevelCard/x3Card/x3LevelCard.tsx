@@ -1,10 +1,14 @@
-// src/components/LevelCard/LevelCard.tsx
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+import CONTRACT_ABI from '@/components/SmartContract/abi.json';
+import { ethers } from 'ethers';
+import { Web3Provider } from '@ethersproject/providers';
+
+const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5"; // Replace with actual contract address
 
 interface LevelCardProps {
   level: number;
@@ -21,7 +25,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
   const userWalletAddress = staticAddress;
 
-  const { getUserIdsWalletaddress } = useSmartContract();
+  const { getUserIdsWalletaddress, transferTokens } = useSmartContract();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
   const [userAddress, setUserAddress] = useState<string>('');
@@ -45,18 +49,34 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
     fetchUserAddress();
   }, [userId, getUserIdsWalletaddress, userWalletAddress]);
 
-  const handleClick = () => {
-    if (isActive) {
-      const userIdParam = userId ? `&userId=${userId}` : '';
-      router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles}${userIdParam}`);
-    } else {
-      alert('This level is inactive. Please activate it first!');
+  // Activate level when clicked
+  const handleActivate = async (clickedLevel: number) => {
+    try {
+      const provider = new Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []); // Request account access
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // Transfer tokens to the contract
+      // const tokenVerification = await transferTokens(CONTRACT_ADDRESS, "0.0002");
+      // console.log('Token Verification:', tokenVerification);
+      // console.log('Wallet Address:', walletAddress);
+
+      // Call the contract to activate the level
+      const tx = await contract.buyNewLevel(1, clickedLevel);
+      await tx.wait(); // Wait for the transaction to complete
+      console.log('Level activated successfully:', tx);
+      alert(`Level ${clickedLevel} activated successfully! Transaction Hash: ${tx.hash}`);
+
+      // Optional: Refresh the page or data
+      router.refresh();
+    } catch (error) {
+      console.error("Error activating level:", error);
     }
   };
 
   const renderPartnerCircles = () => {
     const circles = [];
-
     for (let i = 0; i < 3; i++) {
       circles.push(
         <div
@@ -65,18 +85,17 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
         ></div>
       );
     }
-
     return circles;
   };
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div
-        className={`bg-blue-700 p-4 rounded-lg text-center border border-gray-600 relative cursor-pointer ${
-          isActive ? '' : 'opacity-50 pointer-events-none'
-        }`}
-        onClick={handleClick}
-      >
+     <div
+  className={`bg-blue-700 p-4 rounded-lg text-center border border-gray-600 relative cursor-pointer ${
+    isActive ? '' : 'opacity-50'
+  }`}
+>
+
         <div className="flex justify-between mb-4">
           <div className="text-xl font-bold">Lvl {level}</div>
           <div className="text-lg">{cost} BUSD</div>
@@ -93,7 +112,10 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
           </div>
         </div>
         {!isActive && (
-          <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
+          <div
+            className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold"
+            onClick={() => handleActivate(level)} // Pass the clicked level to the handler
+          >
             Inactive
           </div>
         )}
