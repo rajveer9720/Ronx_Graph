@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FaUsers, FaSyncAlt, FaCoins } from 'react-icons/fa';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import { useWallet } from '@/app/context/WalletContext';
+import CONTRACT_ABI from '@/components/SmartContract/abi.json';
+import { ethers } from 'ethers';
+import { Web3Provider } from '@ethersproject/providers';
+
+const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5"; // Replace with actual contract address
+
 
 interface LevelCardProps {
   level: number;
@@ -35,9 +41,34 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
     }
   }, [userId, getUserIdsWalletaddress, walletAddress]);
 
-  const handleCardClick = () => {
-    const queryParams = userId ? `&userId=${userId}` : '';
-    router.push(`/retro/levelslider/x4slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles || 0}${queryParams}`);
+  // const handleCardClick = () => {
+  //   const queryParams = userId ? `&userId=${userId}` : '';
+  //   router.push(`/retro/levelslider/x4slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles || 0}${queryParams}`);
+  // };
+
+  const handleActivate = async (clickedLevel: number) => {
+    try {
+      const provider = new Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []); // Request account access
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // Transfer tokens to the contract
+      // const tokenVerification = await transferTokens(CONTRACT_ADDRESS, "0.0002");
+      // console.log('Token Verification:', tokenVerification);
+      // console.log('Wallet Address:', walletAddress);
+
+      // Call the contract to activate the level
+      const tx = await contract.buyNewLevel(2, clickedLevel);
+      await tx.wait(); // Wait for the transaction to complete
+      console.log('Level activated successfully:', tx);
+      alert(`Level ${clickedLevel} activated successfully! Transaction Hash: ${tx.hash}`);
+
+      // Optional: Refresh the page or data
+      router.refresh();
+    } catch (error) {
+      console.error("Error activating level:", error);
+    }
   };
 
   const renderPartnerCircles = () => (
@@ -61,7 +92,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
         className={`relative bg-blue-600 p-4 rounded-lg text-white text-center border border-blue-500 shadow-lg cursor-pointer hover:shadow-xl transition-shadow duration-300 ${
           isActive ? 'opacity-100' : 'opacity-50'
         }`}
-        onClick={handleCardClick}
+        onClick={() => handleActivate(level)}
       >
         {!isActive && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-2xl font-bold">
