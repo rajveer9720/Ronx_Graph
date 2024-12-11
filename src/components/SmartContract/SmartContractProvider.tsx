@@ -6,10 +6,7 @@ import abi from "@/components/SmartContract/abi.json";
 import TOKEN_ABI from "@/components/SmartContract/tokenabi.json";
 import axios from "axios";
 import { Web3Provider } from "@ethersproject/providers";
-
-const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5";
-const TOKEN_CONTRACT_ADDRESS = "0x0d59F11176CA41c7EcCbf6c10E357f8dCcA75a09"; // Replace with actual token address
-const INFURA_PROJECT_ID = "54342a1556274e579ef82ed1022b7a7c";
+import { INFURA_PROJECT_ID, CONTRACT_ADDRESS, TOKEN_CONTRACT_ADDRESS } from "@/config/constants";
 
 interface SmartContractContextType {
   fetchData: (methodName: string, ...params: any[]) => Promise<any | null>;

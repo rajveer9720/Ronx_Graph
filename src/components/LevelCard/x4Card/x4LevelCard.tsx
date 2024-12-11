@@ -8,8 +8,7 @@ import { useWallet } from '@/app/context/WalletContext';
 import CONTRACT_ABI from '@/components/SmartContract/abi.json';
 import { ethers } from 'ethers';
 import { Web3Provider } from '@ethersproject/providers';
-
-const CONTRACT_ADDRESS = "0x6f4dc25CEb0581eDD1Cc5A982794AC021bFEa2a5"; // Replace with actual contract address
+import { CONTRACT_ADDRESS } from '@/config/constants';
 
 
 interface LevelCardProps {
