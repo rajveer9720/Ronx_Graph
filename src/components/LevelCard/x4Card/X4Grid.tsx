@@ -71,7 +71,7 @@ const X4Grid: React.FC = () => {
         const partners = await Promise.all(
           levelDataX4.map(async (data) => {
             const matrix = await userX4Matrix(userAddress, data.level);
-            return matrix[1]?.length || 0;
+            return Array.isArray(matrix) && matrix[1] ? matrix[1].length : 0;
           })
         );
 

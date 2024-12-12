@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
+
+declare global {
+  interface Window {
+    ethereum: any;
+  }
+}
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaUsers, FaSyncAlt, FaCoins } from 'react-icons/fa';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
@@ -41,7 +47,7 @@ const LevelCard: React.FC<LevelCardProps> = ({
     if (userId) {
       const fetchAddress = async () => {
         const fetchedAddress = await getUserIdsWalletaddress(Number(userId));
-        setUserAddress(fetchedAddress || walletAddress || '');
+        setUserAddress(String(fetchedAddress) || walletAddress || '');
       };
       fetchAddress();
     }
@@ -125,6 +131,9 @@ const LevelCard: React.FC<LevelCardProps> = ({
           </div>
         </div>
       </div>
+  
+  
+        
     </Suspense>
   );
 };
