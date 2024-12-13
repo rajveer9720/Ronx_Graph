@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import Image from '@/components/ui/image';
 import BannerSecond from '@/assets/images/BannerSecond.png';
 import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
+import client from '@/lib/apolloClient';
+import { GET_USERS } from '@/graphql/PlatformRecentActivity/queries';
+import { ApolloQueryResult } from '@apollo/client';
+import { GET_ACTIVE_USER } from '@/graphql/GetTotalNumberActive/queries';
+
+
 
 const ActivitySection: React.FC = () => {
   const { getUserRecentActivityUserMatrics, getPlatformRecentActivity } = useSmartContract();
@@ -10,63 +16,56 @@ const ActivitySection: React.FC = () => {
   const [activities, setActivities] = useState<any[]>([]);
 
   // Fetch getUserRecentActivityUserMatrics data 
-  useEffect(() => {
-    const fetchUserMetrics = async () => {
-      const data = await getUserRecentActivityUserMatrics(24, "hour");
-      if (data) {
-        const totalUsers = data.totalUsers?.toNumber() || 0;
-        const recentUsers = data.recentUsers?.toNumber() || 0;
-        setTotalUser(totalUsers);
-        setRecentUser(recentUsers);
-      } else {
-        setTotalUser(0);
-        setRecentUser(0);
-      }
-    };
-    fetchUserMetrics();
-  }, [getUserRecentActivityUserMatrics]);
 
   // Fetch platform recent activity data in the specified format
   useEffect(() => {
     const fetchPlatformActivity = async () => {
       try {
-        const data = await getPlatformRecentActivity();
-        console.log("test data platformUser:", data?.toString()); // Log entire string data
-  
+        const { data } = await client.query({
+          query: GET_USERS,
+        }) as ApolloQueryResult<any>;
         if (data) {
-          // Split the string by new lines to separate each activity
-          const activityLines = data.split("\n");
-  
-          // Extract user activity details from each line using regex
-          const formattedActivities = activityLines.map((line: string) => {
-            const regex = /User ID: (\d+) - Action: ([\w\s]+) - Matrix: (\d+) - Level: (\d+) - Timestamp: (\d+)/;
-            const match = line.match(regex);
-  
-            if (match) {
-              const [, userId, action, matrix, level, timestamp] = match;
-  
-              return {
-                userId,
-                action,
-                matrix,
-                level,
-                timestamp: new Date(parseInt(timestamp, 10) * 1000).toLocaleString(), // Convert to readable date
-              };
-            } else {
-              return null; // In case there's a mismatch, skip it
-            }
-          }).filter(Boolean); // Remove any null entries
-  
+          const formattedActivities = data.newUserPlaces.map((activity: any) => ({
+            userId: activity.user,
+            action: activity.place,
+            matrix: activity.matrix,
+            level: activity.level,
+            timestamp: new Date(parseInt(activity.blockTimestamp, 10) * 1000).toLocaleString(),
+          }));
           setActivities(formattedActivities);
         }
       } catch (error) {
         console.error('Error fetching platform activity:', error);
       }
     };
-  
+
     fetchPlatformActivity();
-  }, [getPlatformRecentActivity]);
-  
+  }, []);
+
+  //GetTotalNumberActive User counter and recent user counter
+  useEffect(() => {
+    const fetchActiveUser = async () => {
+      try {
+        const { data } = await client.query({
+          query: GET_ACTIVE_USER,
+        }) as ApolloQueryResult<any>;
+        if (data) {
+          const totalUsers = data.registrations.length;
+          const recentUsers = data.registrations.filter((user: any) => {
+            const currentTime = new Date().getTime();
+            const userTime = new Date(user.blockTimestamp).getTime();
+            return currentTime - userTime < 24 * 60 * 60 * 1000;
+          }).length;
+          setTotalUser(totalUsers);
+          setRecentUser(recentUsers);
+        }
+      } catch (error) {
+        console.error('Error fetching active user:', error);
+      }
+    };
+
+    fetchActiveUser();
+  }, []);
 
   return (
     <section className="my-6">
