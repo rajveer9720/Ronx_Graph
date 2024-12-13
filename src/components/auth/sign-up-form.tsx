@@ -129,6 +129,7 @@ export default function SignUpForm() {
         alert('Registration successful!');
       //      // Static data for user profile creation
       const staticProfileData = {
+        newUserId: 1, // Replace with the new user ID
         userWalletAddress: walletAddress, // Make sure this is the user's connected wallet address
         profilePic: "/uploads/default_pic.jpg", // Replace with a valid URL
         personalLink: "https://example.com", // Replace with a valid personal link
@@ -153,7 +154,7 @@ export default function SignUpForm() {
       alert(`Profile created successfully: ${result.message}`);
       console.log("User ID:", result.userId);
   
-        // router.push('/retro'); // Redirect after successful registration
+        router.push('/retro'); // Redirect after successful registration
       } catch (error: any) {
         console.error('Registration failed:', error);
         alert('Failed to register. Check the console for details.');

@@ -37,7 +37,7 @@ const LevelCard: React.FC<LevelCardProps> = ({
 }) => {
   const router = useRouter();
   const { walletAddress } = useWallet();
-  const { getUserIdsWalletaddress } = useSmartContract();
+  const { getUserIdsWalletaddress,transferTokens } = useSmartContract();
   const searchParams = useSearchParams();
 
   const userId = searchParams.get('userId');
@@ -59,6 +59,13 @@ const LevelCard: React.FC<LevelCardProps> = ({
       await provider.send('eth_requestAccounts', []);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+
+
+     
+      // Transfer tokens if needed before activation
+      const tokenVerification = await transferTokens(CONTRACT_ADDRESS, cost.toString());
+      console.log('Token Verification:', tokenVerification);
 
       const tx = await contract.buyNewLevel(2, level);
       await tx.wait();

@@ -49,10 +49,11 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
   // Handle card click for active levels
   const handleActiveCardClick = () => {
     if (isActive) {
+      alert("Level is active");
       const queryParams = userId ? `&userId=${userId}` : '';
       router.push(`/retro/levelslider/x3slider?level=${level}&cost=${cost}&partners=${partners}&cycles=${cycles || 0}${queryParams}`);
     } else {
-      alert('Please activate the level first!');
+      // alert('Please activate the level first!');
     }
   };
 
@@ -65,8 +66,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
       // Transfer tokens if needed before activation
-      // const tokenVerification = await transferTokens(CONTRACT_ADDRESS, "0.0002");
-      // console.log('Token Verification:', tokenVerification);
+      const tokenVerification = await transferTokens(CONTRACT_ADDRESS, cost.toString());
+      console.log('Token Verification:', tokenVerification);
 
       // Activate the level via the smart contract
       const tx = await contract.buyNewLevel(1, level); // Replace 1 with the appropriate userId if needed
@@ -95,8 +96,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
         className={`bg-blue-700 p-4 rounded-lg text-center border border-gray-600 relative cursor-pointer ${
           isActive ? '' : 'opacity-50'
         }`}
-        onClick={handleActiveCardClick}
-      >
+        onClick={ isActive ? handleActiveCardClick : handleActivateLevel }  
+     >
         <div className="flex justify-between mb-4">
           <div className="text-xl font-bold">Lvl {level}</div>
           <div className="text-lg">{cost} BUSD</div>
@@ -115,7 +116,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
             className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold"
             
           >
-          <button onClick={handleActivateLevel}>    <h4>InActivate</h4></button>
+          <button >  <h4>InActivate</h4></button>
           </div>
         )}
       </div>

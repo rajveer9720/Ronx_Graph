@@ -13,7 +13,7 @@ import { authorData } from '@/data/static/author';
 
 interface User {
   _id: string;
-  userid: number;
+  userId: number;
   userWalletAddress: string;
   profilePic: string;
   personalLink: string;
@@ -192,7 +192,7 @@ export default function Profile() {
       </h3>
       <div className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
         <p>
-          <strong>ID:</strong> {user?.userid}
+          <strong>ID:</strong> {user?.userId}
         </p>
         <p>
           <strong>Username:</strong> {user?.username}
