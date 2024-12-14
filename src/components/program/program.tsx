@@ -131,8 +131,11 @@ const Program: React.FC = () => {
   const handleRegisterBUSD = (programName: string) => {
     console.log(`Registering for program: ${programName}`);
     // Implement the registration logic here, such as calling a smart contract function or navigating to a registration page
-    // Example: navigate to a registration page
-    router.push(`/register/${programName}`);
+    if (programName === 'x3') {
+      router.push(`/retro/program/x3`); // Path for x3 program
+    } else if (programName === 'x4') {
+      router.push(`/retro/program/x4`); // Path for x4 program
+    }
   };
 
   return (
