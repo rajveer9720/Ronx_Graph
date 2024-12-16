@@ -28,7 +28,8 @@ const X4Grid: React.FC = () => {
   const { walletAddress } = useWallet();
   const [cyclesData, setCyclesData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
-  const [reminderData, setReminderData] = useState<number[]>(Array(levelDataX4.length).fill(0));
+  const [layerOneData, setLayerOneData] = useState<number[]>(Array(levelDataX4.length).fill(0));
+  const [layerTwoData, setLayerTwoData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
   const [userAddress, setUserAddress] = useState<string>(walletAddress || '');
 
@@ -63,10 +64,10 @@ const X4Grid: React.FC = () => {
           variables: { walletAddress: userAddress },
         });
 
-        const activeLevels = new Array(12).fill(false);
+        const activeLevels = Array(12).fill(false);
         activeLevels[0] = true; // Ensure level 1 is always active
 
-        if (activeLevelsResponse.data && activeLevelsResponse.data.upgrades) {
+        if (activeLevelsResponse.data?.upgrades) {
           activeLevelsResponse.data.upgrades.forEach((upgrade: { level: number }) => {
             if (upgrade.level >= 1 && upgrade.level <= 12) {
               activeLevels[upgrade.level - 1] = true;
@@ -74,41 +75,33 @@ const X4Grid: React.FC = () => {
           });
         }
 
-        // Fetch partners' data from x4Activelevelpartner query for all levels
+        // Fetch partners data from x4Activelevelpartner query for all levels
         const partnersResponse = await Promise.all(
           levelDataX4.map((data) =>
             client.query({
               query: x4Activelevelpartner,
-              variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C", level: data.level },
+              variables: { walletAddress:userAddress , level: data.level },
             })
           )
         );
 
-        // Map partner counts based on the response for each level
-        const partnerCounts = partnersResponse.map((response) => {
-          const partnersAtLevel = response.data.newUserPlaces || [];
-          return partnersAtLevel.length; // Count number of partners at this level
-        });
+        const partnerCounts = partnersResponse.map((response) => response.data.newUserPlaces?.length || 0);
 
-        // Calculate cycles and remainder for each level
-        const cycleData = partnerCounts.map((partnerCount) => {
-          const fullCycles = Math.floor(partnerCount / 6); // Full cycles
-          const remainder = partnerCount % 6; // Remaining partners that don't complete a full cycle
-          return { fullCycles, remainder };
-        });
+        // Calculate cycles and layer data
+        const updatedCycles = partnerCounts.map((count) => Math.floor(count / 6));
+        const updatedLayerOne = partnerCounts.map((count) => Math.min(count, 2));
+        const updatedLayerTwo = partnerCounts.map((count) => Math.max(0, count - 2));
 
-        // Separate full cycles, remainders, and partner counts
-        const updatedCycles = cycleData.map((data) => data.fullCycles);
-        const updatedRemainders = cycleData.map((data) => data.remainder);
-
-        setCyclesData(updatedCycles); // Store full cycles
-        setReminderData(updatedRemainders); // Store remainder (extra partners)
-        setPartnersData(partnerCounts); // Store the total partner counts
+        setCyclesData(updatedCycles);
+        setLayerOneData(updatedLayerOne);
+        setLayerTwoData(updatedLayerTwo);
+        setPartnersData(partnerCounts);
         setIsActiveLevels(activeLevels);
       } catch (error) {
         console.error('Error fetching level data:', error);
       }
     };
+
     fetchLevelData();
   }, [userAddress]);
 
@@ -123,11 +116,11 @@ const X4Grid: React.FC = () => {
                 key={data.level}
                 level={data.level}
                 cost={data.cost}
-                partners={partnersData[index]} // Total partner count
-                cycles={cyclesData[index]} // Total cycle count
-                partnersCount={reminderData[index]} // Partner count remainder
-                partnersCountlayer2={reminderData[index] - cyclesData[index] * 3} // Partner count remainder after full cycles
-                isActive={isActiveLevels[index]} // Active level status
+                partners={partnersData[index]}
+                cycles={cyclesData[index]}
+                partnersCount={layerOneData[index]}
+                partnersCountlayer2={layerTwoData[index]}
+                isActive={isActiveLevels[index]}
               />
             ))}
           </div>
