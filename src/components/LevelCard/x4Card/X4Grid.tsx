@@ -1,11 +1,13 @@
-'use client';
+"use client";
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useSmartContract } from '@/components/SmartContract/SmartContractProvider';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelCard from './x4LevelCard';
 import { useWallet } from '@/app/context/WalletContext';
+import client from '@/lib/apolloClient';
+import { getUserPlacesQuery } from '@/graphql/Grixdx4Level_Partner_and_Cycle_Count_and_Active_Level/queries';
+import { x4Activelevelpartner } from '@/graphql/level_Ways_Partner_data_x4/queries';
 
 const levelDataX4 = [
   { level: 1, cost: 0.0001 },
@@ -13,28 +15,20 @@ const levelDataX4 = [
   { level: 3, cost: 0.0004 },
   { level: 4, cost: 0.0008 },
   { level: 5, cost: 0.0016 },
-  { level: 6, cost:   0.0032 },
+  { level: 6, cost: 0.0032 },
   { level: 7, cost: 0.0064 },
-  { level: 8, cost:   0.0128 },
-  { level: 9, cost:   0.0256 },
-  { level: 10, cost:  0.0512 },
-  { level: 11, cost:  0.1024 },
+  { level: 8, cost: 0.0128 },
+  { level: 9, cost: 0.0256 },
+  { level: 10, cost: 0.0512 },
+  { level: 11, cost: 0.1024 },
   { level: 12, cost: 0.2048 },
 ];
 
 const X4Grid: React.FC = () => {
   const { walletAddress } = useWallet();
-  const {
-    getTotalCycles,
-    userX4Matrix,
-    getPartnerCount,
-    usersActiveX4Levels,
-    getUserIdsWalletaddress,
-  } = useSmartContract();
-
-  const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levelDataX4.length).fill(null));
+  const [cyclesData, setCyclesData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
-  const [partnersLayer2Data, setPartnersLayer2Data] = useState<number[]>(Array(levelDataX4.length).fill(0));
+  const [reminderData, setReminderData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
   const [userAddress, setUserAddress] = useState<string>(walletAddress || '');
 
@@ -45,50 +39,78 @@ const X4Grid: React.FC = () => {
     const fetchUserAddress = async () => {
       if (userId) {
         try {
-          const fetchedAddress = await getUserIdsWalletaddress(Number(userId));
-          setUserAddress(String(fetchedAddress) || walletAddress || '');
+          const { data } = await client.query({
+            query: getUserPlacesQuery,
+            variables: { userId: Number(userId) },
+          });
+          setUserAddress(data?.userPlaces?.walletAddress || walletAddress || '');
         } catch (error) {
           console.error('Error fetching wallet address:', error);
         }
       }
     };
     fetchUserAddress();
-  }, [userId, getUserIdsWalletaddress, walletAddress]);
+  }, [userId, walletAddress]);
 
   useEffect(() => {
     const fetchLevelData = async () => {
       if (!userAddress) return;
 
       try {
-        const activeLevels = await Promise.all(
-          levelDataX4.map((data) => usersActiveX4Levels(userAddress, data.level))
+        // Fetch active levels
+        const activeLevelsResponse = await client.query({
+          query: getUserPlacesQuery,
+          variables: { walletAddress: userAddress },
+        });
+
+        const activeLevels = new Array(12).fill(false);
+        activeLevels[0] = true; // Ensure level 1 is always active
+
+        if (activeLevelsResponse.data && activeLevelsResponse.data.upgrades) {
+          activeLevelsResponse.data.upgrades.forEach((upgrade: { level: number }) => {
+            if (upgrade.level >= 1 && upgrade.level <= 12) {
+              activeLevels[upgrade.level - 1] = true;
+            }
+          });
+        }
+
+        // Fetch partners' data from x4Activelevelpartner query for all levels
+        const partnersResponse = await Promise.all(
+          levelDataX4.map((data) =>
+            client.query({
+              query: x4Activelevelpartner,
+              variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C", level: data.level },
+            })
+          )
         );
 
-        const cycles = await Promise.all(
-          levelDataX4.map((data) => getTotalCycles(userAddress, 1, data.level))
-        );
+        // Map partner counts based on the response for each level
+        const partnerCounts = partnersResponse.map((response) => {
+          const partnersAtLevel = response.data.newUserPlaces || [];
+          return partnersAtLevel.length; // Count number of partners at this level
+        });
 
-        const partners = await Promise.all(
-          levelDataX4.map(async (data) => {
-            const matrix = await userX4Matrix(userAddress, data.level);
-            return Array.isArray(matrix) && matrix[1] ? matrix[1].length : 0;
-          })
-        );
+        // Calculate cycles and remainder for each level
+        const cycleData = partnerCounts.map((partnerCount) => {
+          const fullCycles = Math.floor(partnerCount / 6); // Full cycles
+          const remainder = partnerCount % 6; // Remaining partners that don't complete a full cycle
+          return { fullCycles, remainder };
+        });
 
-        const partnersLayer2 = await Promise.all(
-          levelDataX4.map((data) => getPartnerCount(userAddress, 1, data.level))
-        );
+        // Separate full cycles, remainders, and partner counts
+        const updatedCycles = cycleData.map((data) => data.fullCycles);
+        const updatedRemainders = cycleData.map((data) => data.remainder);
 
-        setIsActiveLevels(activeLevels.map(Boolean));
-        setCyclesData(cycles.map((cycle) => cycle || 0));
-        setPartnersData(partners);
-        setPartnersLayer2Data(partnersLayer2.map((count) => count || 0));
+        setCyclesData(updatedCycles); // Store full cycles
+        setReminderData(updatedRemainders); // Store remainder (extra partners)
+        setPartnersData(partnerCounts); // Store the total partner counts
+        setIsActiveLevels(activeLevels);
       } catch (error) {
         console.error('Error fetching level data:', error);
       }
     };
     fetchLevelData();
-  }, [userAddress, getTotalCycles, userX4Matrix, getPartnerCount, usersActiveX4Levels]);
+  }, [userAddress]);
 
   return (
     <Suspense fallback={<div className="text-center text-gray-400">Loading levels...</div>}>
@@ -101,11 +123,11 @@ const X4Grid: React.FC = () => {
                 key={data.level}
                 level={data.level}
                 cost={data.cost}
-                partners={partnersData[index]}
-                cycles={cyclesData[index]}
-                partnersCount={partnersData[index]}
-                partnersCountlayer2={partnersLayer2Data[index]}
-                isActive={isActiveLevels[index]}
+                partners={partnersData[index]} // Total partner count
+                cycles={cyclesData[index]} // Total cycle count
+                partnersCount={reminderData[index]} // Partner count remainder
+                partnersCountlayer2={reminderData[index] - cyclesData[index] * 3} // Partner count remainder after full cycles
+                isActive={isActiveLevels[index]} // Active level status
               />
             ))}
           </div>
