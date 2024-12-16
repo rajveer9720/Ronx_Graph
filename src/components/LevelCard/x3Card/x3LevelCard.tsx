@@ -99,6 +99,7 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, cost, partners, cycles, pa
         onClick={ isActive ? handleActiveCardClick : handleActivateLevel }  
      >
         <div className="flex justify-between mb-4">
+        
           <div className="text-xl font-bold">Lvl {level}</div>
           <div className="text-lg">{cost} BUSD</div>
         </div>
