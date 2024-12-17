@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
 import client from '@/lib/apolloClient';
+import { CopyIcon, ExternalLinkIcon } from '@chakra-ui/icons';
 import { GET_PARTNER_TABLE, x3_Partner_level_active, x4_Partner_level_active } from '@/graphql/PartnerTable_Through_WalletAddress/queries';
 
 interface Partner {
   id: string;
   wallet: string;
   timestamp: string;
+  transactionHash: string;
   x3Count: number; // Count for X3 levels
   x4Count: number; // Count for X4 levels
 }
@@ -20,7 +22,13 @@ const PartnerPage = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(text);
+    setTimeout(() => setCopied(null), 2000); // Reset copied state after 2 seconds
+  };
   // Function to fetch X3 and X4 counts for a given wallet
   const fetchPartnerLevels = async (wallet: string): Promise<{ x3Count: number; x4Count: number }> => {
     try {
@@ -66,6 +74,7 @@ const PartnerPage = () => {
         return {
           id: reg.userId,
           wallet: reg.user,
+          transactionHash: reg.transactionHash,
           timestamp: new Date(Number(reg.blockTimestamp) * 1000).toLocaleString(),
           x3Count: levels.x3Count,
           x4Count: levels.x4Count,
@@ -114,7 +123,22 @@ const PartnerPage = () => {
               {partners.map((partner) => (
                 <tr key={partner.id} className="hover:bg-gray-50 dark:hover:bg-gray-600">
                   <td className="px-4 py-3 border-b truncate">{partner.id}</td>
-                  <td className="px-4 py-3 border-b truncate max-w-xs">{partner.wallet}</td>
+                  <td className="px-4 py-3 border-b truncate max-w-xs">{partner.wallet} 
+                    <button
+                      className="ml-2 text-white px-2 py-1 rounded hover:text-blue-600"
+                      onClick={() => copyToClipboard(partner.wallet)}
+                    >
+                      <CopyIcon />
+                    </button>
+                    <a
+                      href={`https://testnet.bscscan.com/tx/${partner.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      <ExternalLinkIcon />
+                    </a>
+                  </td>
                   <td className="px-4 py-3 border-b">{partner.timestamp}</td>
                   <td className="px-4 py-3 border-b">{partner.x3Count}</td>
                   <td className="px-4 py-3 border-b">{partner.x4Count}</td>
