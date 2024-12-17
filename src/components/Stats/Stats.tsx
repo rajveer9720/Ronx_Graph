@@ -120,7 +120,7 @@ export default function StatsComponent() {
       try {
         const { data } = await client.query({
           query: GET_STATS_DATA,
-          variables: { referrer: userWalletAddress },
+          variables: { walletAddress: userWalletAddress },
         });
         console.log('data', data);
         // Transform the data to match the required format
