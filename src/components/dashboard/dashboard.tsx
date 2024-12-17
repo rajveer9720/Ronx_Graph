@@ -4,6 +4,7 @@ import { useWallet } from '@/app/context/WalletContext';
 import client from '@/lib/apolloClient';
 import { ApolloQueryResult } from '@apollo/client';
 import { GET_TOTAL_PARTNER } from '@/graphql/TotalPartner/queries';
+import { GET_DIRECT_REFERRALS } from '@/graphql/GetTeamSize_Through_WalletAddress/queries';
 
 interface StatCardProps {
   title: string;
@@ -12,18 +13,18 @@ interface StatCardProps {
 }
 
 const levels = [
-  { level: 1, cost: 5 },
-  { level: 2, cost: 10 },
-  { level: 3, cost: 20 },
-  { level: 4, cost: 40 },
-  { level: 5, cost: 80 },
-  { level: 6, cost: 160 },
-  { level: 7, cost: 320 },
-  { level: 8, cost: 640 },
-  { level: 9, cost: 1250 },
-  { level: 10, cost: 2500 },
-  { level: 11, cost: 5000 },
-  { level: 12, cost: 9900 },
+  { level: 1, cost: 0.0001 },
+  { level: 2, cost: 0.0002 },
+  { level: 3, cost: 0.0004 },
+  { level: 4, cost: 0.0008 },
+  { level: 5, cost: 0.0016 },
+  { level: 6, cost: 0.0032 },
+  { level: 7, cost: 0.0064 },
+  { level: 8, cost: 0.0128 },
+  { level: 9, cost: 0.0256 },
+  { level: 10, cost: 0.0512 },
+  { level: 11, cost: 0.1024 },
+  { level: 12, cost: 0.2048 },
 ];
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
@@ -38,49 +39,93 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, increase }) => {
 
 const Dashboard: React.FC = () => {
   const walletAddress = useWallet();
-  
-  // Access the `address` field within the object, or handle undefined
   const staticAddress = walletAddress ? walletAddress.walletAddress : '';
   const userWalletAddress = staticAddress;
-  console.log("staticAddress #12:", userWalletAddress);
+  console.log('staticAddress #12:', userWalletAddress);
+
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId'); 
+  const userId = searchParams.get('userId');
+
   const [currentPartner, setcurrentPartner] = useState<(number | null)[]>(Array(levels.length).fill(null));
   const [cyclesData, setCyclesData] = useState<(number | null)[]>(Array(levels.length).fill(null));
-  const [partnersData, setPartnersData] = useState<number>(0); // Initialize with numbers
+  const [partnersData, setPartnersData] = useState<number>(0);
+  const [teamSize, setTeamSize] = useState<number>(0); // Add state to store Team Size count
 
-  const [userAddress, setUserAddress] = useState<string>(staticAddress || ''); // Initially static address, will set to fetched address
+  const [userAddress, setUserAddress] = useState<string>(staticAddress || '');
   const [userData, setUserData] = useState<{
     id: number;
     referrer: string;
     partnersCount: number;
     registrationTime: number;
   } | null>(null);
-  const [teamSize, setTeamSize] = useState<string>(''); // Store team size
+
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch Total Partner data wallet address pass
+  // Recursive function to fetch all team referrals
+  const fetchAllReferrals = async (referrer: string, visited = new Set()): Promise<string[]> => {
+    if (visited.has(referrer)) return [];
+    visited.add(referrer);
+
+    try {
+      const { data } = await client.query({
+        query: GET_DIRECT_REFERRALS,
+        variables: { referrer },
+      });
+
+      const directReferrals = data?.registrations?.map((reg: any) => reg.user) || [];
+      console.log(`Direct referrals of ${referrer}:`, directReferrals);
+
+      let teamList = [...directReferrals];
+      for (const referral of directReferrals) {
+        const subTeam = await fetchAllReferrals(referral, visited);
+        teamList = teamList.concat(subTeam);
+      }
+      return teamList;
+    } catch (err) {
+      console.error(`Error fetching referrals for ${referrer}:`, err);
+      return [];
+    }
+  };
+
+  // Fetch Total Partner data (Wallet Address passed)
   useEffect(() => {
     const fetchTotalPartner = async () => {
-      try { 
-        // GET_TOTAL_PARTNER query to fetch total partner
-        const { data } = await client.query({
+      try {
+        const { data } = (await client.query({
           query: GET_TOTAL_PARTNER,
           variables: { referrer: userWalletAddress },
-        }) as ApolloQueryResult<any>;
+        })) as ApolloQueryResult<any>;
         if (data) {
-          // total userid partner counter 
-          console.log("test data:", data);
+          console.log('test data:', data);
           const totalPartner = data.registrations.length;
-
           setPartnersData(totalPartner);
         }
       } catch (error) {
         console.error('Error fetching total partner:', error);
+        setError('Failed to fetch total partner data.');
       }
-    }
+    };
+
     if (userWalletAddress) {
       fetchTotalPartner();
+    }
+  }, [userWalletAddress]);
+
+  // Fetch Team Size using recursion
+  useEffect(() => {
+    const fetchTeamSize = async () => {
+      try {
+        const teamList = await fetchAllReferrals(userWalletAddress || '');
+        console.log('Complete Team List:', teamList);
+        setTeamSize(teamList.length);
+      } catch (err) {
+        console.error('Error fetching team size:', err);
+        setError('Failed to fetch team size data.');
+      }
+    };
+
+    if (userWalletAddress) {
+      fetchTeamSize();
     }
   }, [userWalletAddress]);
 
@@ -92,7 +137,11 @@ const Dashboard: React.FC = () => {
           value={partnersData.toString()}
           increase="↑ 0"
         />
-        <StatCard title="Team" value={"test"} increase="↑ 0" />
+        <StatCard
+          title="Team"
+          value={teamSize.toString()} // Display Team Size count
+          increase="↑ 0"
+        />
         <StatCard title="Ratio" value={`2%`} increase="↑ 0%" />
         <StatCard title="Profits" value={`3`} increase="↑ 0" />
       </>
