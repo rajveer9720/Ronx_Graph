@@ -65,7 +65,7 @@ const PartnerPage = () => {
       // Fetch partner registration data
       const { data } = await client.query({
         query: GET_PARTNER_TABLE,
-        variables: { walletAddress:"0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
+        variables: { walletAddress:staticAddress },
       });
       console.log('Partner data:', data);
       // Fetch X3/X4 counts for each partner
