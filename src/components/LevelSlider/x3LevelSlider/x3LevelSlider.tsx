@@ -8,7 +8,7 @@ import LevelTransection from '@/components/level_transection/level_transection';
 import client from '@/lib/apolloClient';
 import { getUserPlacesQuery } from '@/graphql/Grixdx3Level_Partner_and_Cycle_Count_and_Active_Level/queries';
 import { x3Activelevelpartner } from '@/graphql/level_Ways_Partner_data_x3/queries';
-
+import Image from 'next/image';
 const levels = [
   { level: 1, cost: 0.0001 },
   { level: 2, cost: 0.0002 },

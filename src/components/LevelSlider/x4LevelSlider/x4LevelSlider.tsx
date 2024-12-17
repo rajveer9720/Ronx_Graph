@@ -165,12 +165,9 @@ const LevelSliderx4: React.FC = () => {
             {/* Activate/Deactivate Level Button */}
             <div className="absolute inset-0 flex items-center justify-center">
               {!isActiveLevels[currentLevel - 1] &&
-                <button
-                  onClick={() => handleActivate(currentLevel)}
-                  className="px-6 py-2 rounded text-xl bg-green-500 hover:bg-green-600"
-                >
-                  Deactivate
-                </button>
+             <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
+             <button className="px-6 py-2 rounded text-xl">Inactive</button>
+         </div>
              }
             </div>
           </div>
