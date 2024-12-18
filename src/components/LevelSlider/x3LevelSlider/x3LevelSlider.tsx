@@ -1,14 +1,19 @@
 'use client'; // Ensure client-side rendering
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useWallet } from '@/app/context/WalletContext';
 import LevelHeader from '@/components/levelheader/x3levelheader/x3levelheader';
 import NotifyBot from '@/components/notifybot/notifybot';
 import LevelTransection from '@/components/level_transection/level_transection';
 import client from '@/lib/apolloClient';
+import { ApolloQueryResult } from '@apollo/client';
 import { getUserPlacesQuery } from '@/graphql/Grixdx3Level_Partner_and_Cycle_Count_and_Active_Level/queries';
 import { x3Activelevelpartner } from '@/graphql/level_Ways_Partner_data_x3/queries';
-import Image from 'next/image';
+import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
+
+
+
 const levels = [
   { level: 1, cost: 0.0001 },
   { level: 2, cost: 0.0002 },
@@ -32,8 +37,33 @@ const LevelSliderx3: React.FC = () => {
   const [cyclesData, setCyclesData] = useState<number[]>(new Array(12).fill(0));
   const [reminderData, setReminderData] = useState<number[]>(new Array(12).fill(0));
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
-
+  const [userIds, setUserIds] = useState<Record<string, string>>({});
+  const [userId, setUserId] = useState<string | null>(null);
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const { data } = await client.query({
+          query: GET_WALLET_ADDRESS_TO_ID,
+          variables: { wallet: staticAddress },
+        }) as ApolloQueryResult<any>;
+
+        if (data?.registrations?.length > 0) {
+          setUserId(data.registrations[0].userId);
+        } else {
+          setUserId(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user ID:', error);
+        setUserId(null);
+      }
+    };
+
+    fetchUserId();
+  }, [staticAddress]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,7 +122,7 @@ const LevelSliderx3: React.FC = () => {
 
   return (
     <>
-      <LevelHeader userid={staticAddress ?? '0x0'} level={currentLevel} uplineId={0} />
+      <LevelHeader userid={userId || ''} level={currentLevel} uplineId={0} />
 
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         {/* Previous Level Button */}
@@ -113,7 +143,7 @@ const LevelSliderx3: React.FC = () => {
               <div className="p-9">
                 <div className="flex justify-between items-center mb-6">
                   <div className="text-xl font-bold">Lvl {currentLevel}</div>
-                  <div className="text-xl font-bold">ID: {staticAddress || 'Loading...'}</div>
+                  <div className="text-xl font-bold">ID: {userId || 'Loading...'}</div>
                   <div className="text-lg">{levels[currentLevel - 1].cost} BUSD</div>
                 </div>
 

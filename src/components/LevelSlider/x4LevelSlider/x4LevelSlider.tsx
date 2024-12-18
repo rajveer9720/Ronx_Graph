@@ -8,8 +8,11 @@ import LevelTransection from "@/components/level_transection/level_transection";
 import { useWallet } from '@/app/context/WalletContext';
 
 import client from "@/lib/apolloClient";
+import { ApolloQueryResult } from '@apollo/client';
+
 import { getUserPlacesQuery } from "@/graphql/Grixdx4Level_Partner_and_Cycle_Count_and_Active_Level/queries";
 import { x4Activelevelpartner } from "@/graphql/level_Ways_Partner_data_x4/queries";
+import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
 
 const levelDataX4 = [
   { level: 1, cost: 0.0001 },
@@ -34,7 +37,32 @@ const LevelSliderx4: React.FC = () => {
   const [layerOneData, setLayerOneData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [layerTwoData, setLayerTwoData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
+    const [userId, setUserId] = useState<string | null>(null);
+  
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
+
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const { data } = await client.query({
+          query: GET_WALLET_ADDRESS_TO_ID,
+          variables: { wallet: staticAddress },
+        }) as ApolloQueryResult<any>;
+
+        if (data?.registrations?.length > 0) {
+          setUserId(data.registrations[0].userId);
+        } else {
+          setUserId(null);
+        }
+      } catch (error) {
+        console.error('Error fetching user ID:', error);
+        setUserId(null);
+      }
+    };
+
+    fetchUserId();
+  }, [staticAddress]);
 
   useEffect(() => {
     const fetchLevelData = async () => {
@@ -105,7 +133,7 @@ const LevelSliderx4: React.FC = () => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <LevelHeader userid={1} level={currentLevel} uplineId={0} />
+      <LevelHeader userid={userId || ''} level={currentLevel} uplineId={0} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}
@@ -119,7 +147,7 @@ const LevelSliderx4: React.FC = () => {
             <div className="p-9">
               <div className="flex justify-between items-center mb-6">
                 <div className="text-xl font-bold">Lvl {currentLevel}</div>
-                <div className="text-xl font-bold">ID: {staticAddress}</div>
+                <div className="text-xl font-bold">ID: {userId}</div>
                 <div className="text-lg">{levelDataX4[currentLevel - 1]?.cost} BUSD</div>
               </div>
 
