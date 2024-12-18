@@ -107,7 +107,7 @@ const ActivitySection: React.FC = () => {
                     <tr key={index} className="hover:bg-gray-700">
                       <td className="px-4 py-2">{activity.userId}</td>
                       <td className="px-4 py-2">{activity.action}</td>
-                      <td className="px-4 py-2">{activity.matrix || '-'}</td>
+                        <td className="px-4 py-2">{activity.matrix == "1" ? "x3" : activity.matrix == "2" ? "x4" : '-'}</td>
                       <td className="px-4 py-2">{activity.level || '-'}</td>
                       <td className="px-4 py-2">{activity.timestamp}</td>
                     </tr>
