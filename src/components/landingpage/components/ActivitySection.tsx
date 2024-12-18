@@ -17,31 +17,20 @@ const ActivitySection: React.FC = () => {
     try {
       const { data } = await client.query({ query: GET_USERS }) as ApolloQueryResult<any>;
       if (data) {
-        const userActivities: Record<string, any> = {};
-
-        // Combine registrations and upgrades
-        [...data.registrations, ...data.upgrades].forEach((activity: any) => {
-          const userId = activity.user;
-          const action = activity.userId ? "Registration" : "Upgrade";
+        const allActivities = [...data.registrations, ...data.upgrades].map((activity: any) => {
           const timestamp = parseInt(activity.blockTimestamp, 10) * 1000;
-
-          // Capture the matrix from the upgrade data (if available)
-          // Default to "1" if no matrix in the activity
-          console.log("Activity Data:", activity);
-          if (!userActivities[userId] || userActivities[userId].timestamp < timestamp) {
-            userActivities[userId] = {
-              userId,
-              action,
-              matrix : activity.matrix ,
-              level: activity.level || "1",
-              timestamp,
-            };
-          }
+          return {
+            userId: activity.user,
+            action: activity.userId ? "Registration" : "Upgrade",
+            matrix: activity.matrix, // Default to "1" if no matrix is provided
+            level: activity.level || "1", // Default to "1" if no level is provided
+            timestamp,
+          };
         });
 
         const formattedActivities = await Promise.all(
-          Object.values(userActivities)
-            .sort((a: any, b: any) => b.timestamp - a.timestamp)
+          allActivities
+            .sort((a: any, b: any) => b.timestamp - a.timestamp) // Sort by most recent activity
             .map(async (activity: any) => {
               // Fetch wallet address to ID
               const walletData = await client.query({
@@ -122,7 +111,7 @@ const ActivitySection: React.FC = () => {
                     <tr key={index} className="hover:bg-gray-700">
                       <td className="px-4 py-2">{activity.userId}</td>
                       <td className="px-4 py-2">{activity.action}</td>
-                      <td className="px-4 py-2">{activity.matrix == "1"?"x3": activity.matrix =="2"?"x4":"x3 & x4 "}</td>
+                      <td className="px-4 py-2">{activity.matrix == "1" ? "x3" : activity.matrix == "2" ? "x4" : "x3 & x4"}</td>
                       <td className="px-4 py-2">{activity.level}</td>
                       <td className="px-4 py-2">{activity.timestamp}</td>
                     </tr>
