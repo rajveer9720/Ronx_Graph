@@ -21,28 +21,43 @@ const ActivitySection: React.FC = () => {
 
         // Combine registrations and upgrades
         [...data.registrations, ...data.upgrades].forEach((activity: any) => {
-          const userId =  activity.user;
+          const userId = activity.user;
           const action = activity.userId ? "Registration" : "Upgrade";
           const timestamp = parseInt(activity.blockTimestamp, 10) * 1000;
-              console.log("Activity Data:", activity);
 
+          // Capture the matrix from the upgrade data (if available)
+          // Default to "1" if no matrix in the activity
+          console.log("Activity Data:", activity);
           if (!userActivities[userId] || userActivities[userId].timestamp < timestamp) {
             userActivities[userId] = {
               userId,
               action,
-              matrix: activity.matrix || "1",
+              matrix : activity.matrix ,
               level: activity.level || "1",
               timestamp,
             };
           }
         });
 
-        const formattedActivities = Object.values(userActivities)
-          .sort((a: any, b: any) => b.timestamp - a.timestamp)
-          .map((activity: any) => ({
-            ...activity,
-            timestamp: new Date(activity.timestamp).toLocaleString(),
-          }));
+        const formattedActivities = await Promise.all(
+          Object.values(userActivities)
+            .sort((a: any, b: any) => b.timestamp - a.timestamp)
+            .map(async (activity: any) => {
+              // Fetch wallet address to ID
+              const walletData = await client.query({
+                query: GET_WALLET_ADDRESS_TO_ID,
+                variables: { wallet: activity.userId },
+              }) as ApolloQueryResult<any>;
+
+              const walletId = walletData.data?.registrations?.[0]?.userId || activity.userId;
+
+              return {
+                ...activity,
+                userId: walletId, // Update with the wallet ID
+                timestamp: new Date(activity.timestamp).toLocaleString(),
+              };
+            })
+        );
 
         setActivities(formattedActivities);
       }
@@ -107,8 +122,8 @@ const ActivitySection: React.FC = () => {
                     <tr key={index} className="hover:bg-gray-700">
                       <td className="px-4 py-2">{activity.userId}</td>
                       <td className="px-4 py-2">{activity.action}</td>
-                        <td className="px-4 py-2">{activity.matrix == "1" ? "x3" : activity.matrix == "2" ? "x4" : '-'}</td>
-                      <td className="px-4 py-2">{activity.level || '-'}</td>
+                      <td className="px-4 py-2">{activity.matrix == "1"?"x3": activity.matrix =="2"?"x4":"x3 & x4 "}</td>
+                      <td className="px-4 py-2">{activity.level}</td>
                       <td className="px-4 py-2">{activity.timestamp}</td>
                     </tr>
                   ))}
@@ -141,4 +156,3 @@ const ActivitySection: React.FC = () => {
 };
 
 export default ActivitySection;
-
