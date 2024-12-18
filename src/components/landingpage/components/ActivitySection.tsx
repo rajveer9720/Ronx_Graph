@@ -4,43 +4,47 @@ import BannerSecond from '@/assets/images/BannerSecond.png';
 import client from '@/lib/apolloClient';
 import { GET_USERS } from '@/graphql/PlatformRecentActivity/queries';
 import { GET_ACTIVE_USER } from '@/graphql/GetTotalNumberActive/queries';
-import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
 import { ApolloQueryResult } from '@apollo/client';
+import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
 
 const ActivitySection: React.FC = () => {
   const [totalUser, setTotalUser] = useState(0);
   const [recentUser, setRecentUser] = useState(0);
   const [activities, setActivities] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Fetch platform activity data and format it
   const fetchPlatformActivity = async () => {
     try {
       const { data } = await client.query({ query: GET_USERS }) as ApolloQueryResult<any>;
       if (data) {
-        const activities = await Promise.all(
-          [...data.registrations, ...data.upgrades].map(async (activity: any) => {
-            const userId = activity.user;
+        const userActivities: Record<string, any> = {};
 
-            // Fetch wallet address to ID
-            const walletData = await client.query({
-              query: GET_WALLET_ADDRESS_TO_ID,
-              variables: { wallet: userId },
-            }) as ApolloQueryResult<any>;
+        // Combine registrations and upgrades
+        [...data.registrations, ...data.upgrades].forEach((activity: any) => {
+          const userId =  activity.user;
+          const action = activity.userId ? "Registration" : "Upgrade";
+          const timestamp = parseInt(activity.blockTimestamp, 10) * 1000;
+              console.log("Activity Data:", activity);
 
-            const walletId = walletData.data?.registrations?.[0]?.userId;
-
-            return {
-              userId: walletId || userId,
-              action: activity.userId ? 'Registration' : 'Upgrade',
-              matrix: activity.matrix || '1',
-              level: activity.level || '1',
-              timestamp: new Date(parseInt(activity.blockTimestamp, 10) * 1000).toLocaleString(),
+          if (!userActivities[userId] || userActivities[userId].timestamp < timestamp) {
+            userActivities[userId] = {
+              userId,
+              action,
+              matrix: activity.matrix || "1",
+              level: activity.level || "1",
+              timestamp,
             };
-          })
-        );
+          }
+        });
 
-        setActivities(activities);
+        const formattedActivities = Object.values(userActivities)
+          .sort((a: any, b: any) => b.timestamp - a.timestamp)
+          .map((activity: any) => ({
+            ...activity,
+            timestamp: new Date(activity.timestamp).toLocaleString(),
+          }));
+
+        setActivities(formattedActivities);
       }
     } catch (error) {
       console.error('Error fetching platform activity:', error);
@@ -67,14 +71,9 @@ const ActivitySection: React.FC = () => {
     }
   };
 
-  // Fetch all data on component mount
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchPlatformActivity();
-      await fetchActiveUser();
-      setLoading(false);
-    };
-    fetchData();
+    fetchPlatformActivity();
+    fetchActiveUser();
   }, []);
 
   return (
@@ -91,40 +90,32 @@ const ActivitySection: React.FC = () => {
         >
           <h2 className="m-6 pt-7 text-4xl font-bold mb-4">Platform Recent Activity</h2>
           <p className="text-lg mb-8">Real-time global events of the RonX Platform</p>
-
-          {loading ? (
-            <div className="text-center text-white text-xl">Loading...</div>
-          ) : (
-            <div className="bg-black rounded-lg overflow-hidden shadow-lg">
-              <div className="overflow-y-auto max-h-96">
-                <table className="table-auto w-full text-left text-white">
-                  <thead>
-                    <tr className="bg-gray-800">
-                      <th className="px-4 py-2">User ID</th>
-                      <th className="px-4 py-2">Action</th>
-                      <th className="px-4 py-2">Matrix</th>
-                      <th className="px-4 py-2">Level</th>
-                      <th className="px-4 py-2">Time</th>
+          <div className="bg-black rounded-lg overflow-hidden shadow-lg">
+            <div className="overflow-y-auto max-h-96">
+              <table className="table-auto w-full text-left text-white">
+                <thead>
+                  <tr className="bg-gray-800">
+                    <th className="px-4 py-2">User ID</th>
+                    <th className="px-4 py-2">Action</th>
+                    <th className="px-4 py-2">Matrix</th>
+                    <th className="px-4 py-2">Level</th>
+                    <th className="px-4 py-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activities.map((activity, index) => (
+                    <tr key={index} className="hover:bg-gray-700">
+                      <td className="px-4 py-2">{activity.userId}</td>
+                      <td className="px-4 py-2">{activity.action}</td>
+                        <td className="px-4 py-2">{activity.matrix == "1" ? "x3" : activity.matrix == "2" ? "x4" : '-'}</td>
+                      <td className="px-4 py-2">{activity.level || '-'}</td>
+                      <td className="px-4 py-2">{activity.timestamp}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {activities.map((activity, index) => (
-                      <tr key={index} className="hover:bg-gray-700">
-                        <td className="px-4 py-2">{activity.userId}</td>
-                        <td className="px-4 py-2">{activity.action}</td>
-                        <td className="px-4 py-2">
-                          {activity.matrix === '1' ? 'x3' : activity.matrix === '2' ? 'x4' : '-'}
-                        </td>
-                        <td className="px-4 py-2">{activity.level}</td>
-                        <td className="px-4 py-2">{activity.timestamp}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-
+          </div>
           <div className="text-center text-white mt-10">
             <h2 className="text-3xl font-bold mb-4">Partner Results</h2>
             <div className="mt-8 flex flex-col sm:flex-row justify-around">
@@ -150,3 +141,4 @@ const ActivitySection: React.FC = () => {
 };
 
 export default ActivitySection;
+
