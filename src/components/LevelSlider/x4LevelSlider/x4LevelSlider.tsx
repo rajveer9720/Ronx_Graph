@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import NotifyBot from "@/components/notifybot/notifybot";
 import LevelHeader from "@/components/levelheader/x4levelheader/x4levelheader";
 import LevelTransection from "@/components/level_transection/level_transection";
+import { useWallet } from '@/app/context/WalletContext';
 
 import client from "@/lib/apolloClient";
 import { getUserPlacesQuery } from "@/graphql/Grixdx4Level_Partner_and_Cycle_Count_and_Active_Level/queries";
@@ -26,14 +27,14 @@ const levelDataX4 = [
 ];
 
 const LevelSliderx4: React.FC = () => {
-  const searchParams = useSearchParams();
+  const walletAddress = useWallet();
   const [currentLevel, setCurrentLevel] = useState<number>(1);
   const [cyclesData, setCyclesData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [partnersData, setPartnersData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [layerOneData, setLayerOneData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [layerTwoData, setLayerTwoData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
-  const staticAddress = "0x5a4f9E6dBf24c6050a0aFa1BE0e940cC1cF4eaA2";
+  const staticAddress = walletAddress ? walletAddress.walletAddress : null;
 
   useEffect(() => {
     const fetchLevelData = async () => {

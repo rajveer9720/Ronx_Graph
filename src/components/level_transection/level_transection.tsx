@@ -54,7 +54,7 @@ function LevelTransection({ currentLevel, matrix }: LevelTransectionProps) {
     const fetchTransactions = async () => {
       try {
         const { data } = await client.query({
-          query: GETLEVELTRANSACTION("0xD733B8fDcFaFf240c602203D574c05De12ae358C" , matrix, currentLevel),
+          query: GETLEVELTRANSACTION(staticAddress || '', matrix, currentLevel),
           variables: { userId: userWalletAddress?.toString() || '', matrix, level: currentLevel }
         }) as ApolloQueryResult<any>;
         if (data) {

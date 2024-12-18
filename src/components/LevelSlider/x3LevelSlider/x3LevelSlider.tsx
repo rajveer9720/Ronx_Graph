@@ -59,7 +59,7 @@ const LevelSliderx3: React.FC = () => {
         levels.map((level) =>
           client.query({
             query: x3Activelevelpartner,
-            variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C", level: level.level },
+            variables: { walletAddress: staticAddress, level: level.level },
           })
         )
       );

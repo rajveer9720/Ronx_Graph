@@ -5,8 +5,7 @@ import client from '@/lib/apolloClient';
 import { GET_USERS } from '@/graphql/PlatformRecentActivity/queries';
 import { GET_ACTIVE_USER } from '@/graphql/GetTotalNumberActive/queries';
 import { ApolloQueryResult } from '@apollo/client';
-import { GET_USER_ID } from '@/graphql/WalletAddressToIdUsers/queries';
-
+import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
 
 const ActivitySection: React.FC = () => {
   const [totalUser, setTotalUser] = useState(0);
@@ -25,6 +24,7 @@ const ActivitySection: React.FC = () => {
           const userId =  activity.user;
           const action = activity.userId ? "Registration" : "Upgrade";
           const timestamp = parseInt(activity.blockTimestamp, 10) * 1000;
+          console.log("Activity Data:", activity);
 
           if (!userActivities[userId] || userActivities[userId].timestamp < timestamp) {
             userActivities[userId] = {
