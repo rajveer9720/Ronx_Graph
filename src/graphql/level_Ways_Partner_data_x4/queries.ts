@@ -1,9 +1,9 @@
 import { gql } from '@apollo/client';
 
-export const x3Activelevelpartner = gql`
+export const x4Activelevelpartner = gql`
     query NewUserPlaces($walletAddress: String!, $level: Int!) {
         newUserPlaces(
-            where: { referrer: $walletAddress, matrix: 1, level: $level }
+            where: { referrer: $walletAddress, matrix: 2, level: $level }
             orderBy: blockTimestamp
             orderDirection: asc
         ) {
