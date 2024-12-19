@@ -9,7 +9,7 @@ import LevelTransection from '@/components/level_transection/level_transection';
 import client from '@/lib/apolloClient';
 import { ApolloQueryResult } from '@apollo/client';
 import { getUserPlacesQuery } from '@/graphql/Grixdx3Level_Partner_and_Cycle_Count_and_Active_Level/queries';
-import { x3Activelevelpartner } from '@/graphql/level_Ways_Partner_data_x3/queries';
+import { x3Activelevelpartner, GET_REGISTRATIONS } from '@/graphql/level_Ways_Partner_data_x3/queries';
 import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
 import { GET_WALLET_ADDRESS_TO_UPLINE_ID } from '@/graphql/WalletAddress_To_UplineId/queries';
 
@@ -41,6 +41,7 @@ const LevelSliderx3: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
   const [uplineId, setUplineId] = useState<string | null>(null);
+  const [actualPartnersPerLevel, setActualPartnersPerLevel] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -131,6 +132,33 @@ const LevelSliderx3: React.FC = () => {
       setReminderData(cycleData.map((data) => data.remainder));
       setPartnerCounts(partnerCountsArray);
       setActiveLevels(activeLevelsArray);
+
+            // Now, let's compare each level's partners to direct partners
+            const { data: directPartnersData } = await client.query({
+              query: GET_REGISTRATIONS,
+              variables: { referrer: staticAddress },
+            });
+      
+            const directPartners = directPartnersData.registrations.map(
+              (registration: { user: string }) => registration.user
+            );
+            console.log("Direct Partners:", directPartners);
+      
+            // Check each level's partners against direct partners
+            const actualPartnersPerLevel = partnerCounts.map((_, index) => {
+              const levelPartners = partnersResponse[index].data.newUserPlaces.map(
+                (partner: { user: string }) => partner.user
+              );
+                const uniqueLevelPartners = Array.from(new Set(levelPartners)) as string[];
+                const matchingPartners: string[] = uniqueLevelPartners.filter((partner: string) =>
+                  directPartners.includes(partner)
+                );
+                console.log(`Level ${index + 1} Actual Partners:`, matchingPartners.length);
+                return matchingPartners.length;
+              });
+              
+            setActualPartnersPerLevel(actualPartnersPerLevel);
+
     };
 
     fetchData();
@@ -193,7 +221,7 @@ const LevelSliderx3: React.FC = () => {
                 {/* Level Stats */}
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center">
-                    <span className="mr-2">👥</span> {partnerCounts[currentLevel - 1]}
+                  <span className="mr-2">👥</span> {actualPartnersPerLevel[currentLevel - 1]}
                   </div>
                   <div className="flex items-center">
                     <span className="mr-2">🔄</span> {cyclesData[currentLevel - 1]} 
