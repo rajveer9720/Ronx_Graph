@@ -11,7 +11,7 @@ import { ApolloQueryResult } from '@apollo/client';
 import { getUserPlacesQuery } from '@/graphql/Grixdx3Level_Partner_and_Cycle_Count_and_Active_Level/queries';
 import { x3Activelevelpartner } from '@/graphql/level_Ways_Partner_data_x3/queries';
 import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
-
+import { GET_WALLET_ADDRESS_TO_UPLINE_ID } from '@/graphql/WalletAddress_To_UplineId/queries';
 
 
 const levels = [
@@ -37,10 +37,10 @@ const LevelSliderx3: React.FC = () => {
   const [cyclesData, setCyclesData] = useState<number[]>(new Array(12).fill(0));
   const [reminderData, setReminderData] = useState<number[]>(new Array(12).fill(0));
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
-  const [userIds, setUserIds] = useState<Record<string, string>>({});
+
   const [userId, setUserId] = useState<string | null>(null);
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
-
+  const [uplineId, setUplineId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -62,6 +62,28 @@ const LevelSliderx3: React.FC = () => {
     };
 
     fetchUserId();
+  }, [staticAddress]);
+
+  //staticaddress to uplineid fetch data throgh graphql api
+  useEffect(() => {
+    const fetchUplineId = async () => {
+      try {
+        const { data } = await client.query({
+          query: GET_WALLET_ADDRESS_TO_UPLINE_ID,
+          variables: { walletAddress: staticAddress },
+        }) as ApolloQueryResult<any>;
+
+        if (data?.registrations?.length > 0) {
+          setUplineId(data.registrations[0].referrerId);
+        } else {
+          setUplineId(null);
+        }
+      } catch (error) {
+        console.error('Error fetching upline ID:', error);
+        setUplineId(null);
+      }
+    };
+    fetchUplineId();
   }, [staticAddress]);
 
 
@@ -122,7 +144,7 @@ const LevelSliderx3: React.FC = () => {
 
   return (
     <>
-      <LevelHeader userid={userId || ''} level={currentLevel} uplineId={0} />
+      <LevelHeader userid={userId || ''} level={currentLevel} uplineId={uplineId ? parseInt(uplineId) : 0} />
 
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         {/* Previous Level Button */}
