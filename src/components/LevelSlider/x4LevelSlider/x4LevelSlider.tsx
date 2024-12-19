@@ -93,7 +93,7 @@ const LevelSliderx4: React.FC = () => {
         // Fetch active levels
         const activeLevelsResponse = await client.query({
           query: getUserPlacesQuery,
-          variables: { walletAddress: staticAddress },
+          variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
         });
   
         const activeLevels = Array(12).fill(false);
