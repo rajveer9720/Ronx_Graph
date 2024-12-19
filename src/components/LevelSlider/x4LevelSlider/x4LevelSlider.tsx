@@ -13,6 +13,7 @@ import { ApolloQueryResult } from '@apollo/client';
 import { getUserPlacesQuery } from "@/graphql/Grixdx4Level_Partner_and_Cycle_Count_and_Active_Level/queries";
 import { x4Activelevelpartner, GET_REGISTRATIONS } from "@/graphql/level_Ways_Partner_data_x4/queries";
 import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
+import { GET_WALLET_ADDRESS_TO_UPLINE_ID } from '@/graphql/WalletAddress_To_UplineId/queries';
 
 const levelDataX4 = [
   { level: 1, cost: 0.0001 },
@@ -38,6 +39,7 @@ const LevelSliderx4: React.FC = () => {
   const [layerTwoData, setLayerTwoData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
   const [userId, setUserId] = useState<string | null>(null);
+  const [uplineId, setUplineId] = useState<number | null>(null);
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
   const [actualPartnersPerLevel, setActualPartnersPerLevel] = useState<number[]>([]);
 
@@ -46,7 +48,7 @@ const LevelSliderx4: React.FC = () => {
       try {
         const { data } = await client.query({
           query: GET_WALLET_ADDRESS_TO_ID,
-          variables: { wallet: "0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
+          variables: { wallet: staticAddress },
         }) as ApolloQueryResult<any>;
 
         if (data?.registrations?.length > 0) {
@@ -61,6 +63,28 @@ const LevelSliderx4: React.FC = () => {
     };
 
     fetchUserId();
+  }, [staticAddress]);
+
+  //staticAddress to uplineId fetch through graphql query
+  useEffect(() => {
+    const fetchUplineId = async () => {
+      try {
+        const { data } = await client.query({
+          query: GET_WALLET_ADDRESS_TO_UPLINE_ID,
+          variables: { walletAddress: staticAddress },
+        }) as ApolloQueryResult<any>;
+
+        if (data?.registrations?.length > 0) {
+          setUplineId(data.registrations[0].referrerId);
+        } else {
+          setUplineId(null);
+        }
+      } catch (error) {
+        console.error('Error fetching upline ID:', error);
+        setUserId(null);
+      }
+    };  
+    fetchUplineId();
   }, [staticAddress]);
 
   useEffect(() => {
@@ -88,7 +112,7 @@ const LevelSliderx4: React.FC = () => {
           levelDataX4.map((data) =>
             client.query({
               query: x4Activelevelpartner,
-              variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C", level: data.level },
+              variables: { walletAddress: staticAddress, level: data.level },
             })
           )
         );
@@ -112,7 +136,7 @@ const LevelSliderx4: React.FC = () => {
         // Now, let's compare each level's partners to direct partners
         const { data: directPartnersData } = await client.query({
           query: GET_REGISTRATIONS,
-          variables: { referrer: "0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
+          variables: { referrer: staticAddress },
         });
   
         const directPartners = directPartnersData.registrations.map(
@@ -161,7 +185,7 @@ const LevelSliderx4: React.FC = () => {
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <LevelHeader userid={userId || ''} level={currentLevel} uplineId={0} />
+      <LevelHeader userid={userId || ''} level={currentLevel} uplineId={uplineId?.toString() || ''} />
       <div className="flex items-center justify-center text-white p-4 mx-auto max-w-screen-lg">
         <button
           onClick={previousLevel}

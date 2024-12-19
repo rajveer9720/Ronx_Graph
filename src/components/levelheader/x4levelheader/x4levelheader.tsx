@@ -4,7 +4,7 @@ import React from 'react';
 interface LevelHeaderProps {
   userid: string;
   level: number;
-  uplineId: number;
+  uplineId: string;
 }
 
 const LevelHeader: React.FC<LevelHeaderProps> = ({userid, level, uplineId }) => {
