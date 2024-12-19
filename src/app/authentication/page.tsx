@@ -5,7 +5,7 @@ import AnchorLink from '@/components/ui/links/anchor-link';
 import routes from '@/config/routes';
 
 // import images and icons
-import BitcoinImg from '@/assets/images/bit-coin.png';
+import BitcoinImg from '@/assets/images/bitcoin.png';
 import GoogleIcon from '@/assets/images/google-icon.svg';
 
 export default function SignIn() {

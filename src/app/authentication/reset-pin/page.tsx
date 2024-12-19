@@ -4,7 +4,7 @@ import ResetPinForm from '@/components/auth/reset-pin-form';
 import { useRouter } from 'next/router';
 
 // import images and icons
-import BitcoinImg from '@/assets/images/bit-coin.png';
+import BitcoinImg from '@/assets/images/bitcoin.png';
 
 export default function ResetPin() {
   return (

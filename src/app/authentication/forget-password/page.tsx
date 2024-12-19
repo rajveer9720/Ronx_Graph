@@ -3,7 +3,7 @@ import Image from '@/components/ui/image';
 import ForgetPasswordForm from '@/components/auth/forget-password-form';
 
 // import images and icons
-import BitcoinImg from '@/assets/images/bit-coin.png';
+import BitcoinImg from '@/assets/images/bitcoin.png';
 
 export default function ForgetPassword() {
   return (
