@@ -11,7 +11,7 @@ import client from "@/lib/apolloClient";
 import { ApolloQueryResult } from '@apollo/client';
 
 import { getUserPlacesQuery } from "@/graphql/Grixdx4Level_Partner_and_Cycle_Count_and_Active_Level/queries";
-import { x4Activelevelpartner } from "@/graphql/level_Ways_Partner_data_x4/queries";
+import { x4Activelevelpartner, GET_REGISTRATIONS } from "@/graphql/level_Ways_Partner_data_x4/queries";
 import { GET_WALLET_ADDRESS_TO_ID } from '@/graphql/WalletAddress_To_Id/queries';
 
 const levelDataX4 = [
@@ -37,17 +37,16 @@ const LevelSliderx4: React.FC = () => {
   const [layerOneData, setLayerOneData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [layerTwoData, setLayerTwoData] = useState<number[]>(Array(levelDataX4.length).fill(0));
   const [isActiveLevels, setIsActiveLevels] = useState<boolean[]>(Array(levelDataX4.length).fill(false));
-    const [userId, setUserId] = useState<string | null>(null);
-  
+  const [userId, setUserId] = useState<string | null>(null);
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
-
+  const [actualPartnersPerLevel, setActualPartnersPerLevel] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchUserId = async () => {
       try {
         const { data } = await client.query({
           query: GET_WALLET_ADDRESS_TO_ID,
-          variables: { wallet: staticAddress },
+          variables: { wallet: "0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
         }) as ApolloQueryResult<any>;
 
         if (data?.registrations?.length > 0) {
@@ -72,10 +71,10 @@ const LevelSliderx4: React.FC = () => {
           query: getUserPlacesQuery,
           variables: { walletAddress: staticAddress },
         });
-
+  
         const activeLevels = Array(12).fill(false);
         activeLevels[0] = true; // Ensure level 1 is always active
-
+  
         if (activeLevelsResponse.data?.upgrades) {
           activeLevelsResponse.data.upgrades.forEach((upgrade: { level: number }) => {
             if (upgrade.level >= 1 && upgrade.level <= 12) {
@@ -83,38 +82,67 @@ const LevelSliderx4: React.FC = () => {
             }
           });
         }
-
-        // Fetch partners data
+  
+        // Fetch partners data for each level
         const partnersResponse = await Promise.all(
           levelDataX4.map((data) =>
             client.query({
               query: x4Activelevelpartner,
-              variables: { walletAddress: staticAddress, level: data.level },
+              variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C", level: data.level },
             })
           )
         );
-
+  
         const partnerCounts = partnersResponse.map(
           (response) => response.data.newUserPlaces?.length || 0
         );
-
+        console.log("Partner Counts:", partnerCounts);
+  
         // Calculate cycles and layer data
         const updatedCycles = partnerCounts.map((count) => Math.floor(count / 6));
         const updatedLayerOne = partnerCounts.map((count) => Math.min(count, 2));
         const updatedLayerTwo = partnerCounts.map((count) => Math.max(0, count - 2));
-
+  
         setCyclesData(updatedCycles);
         setLayerOneData(updatedLayerOne);
         setLayerTwoData(updatedLayerTwo);
         setPartnersData(partnerCounts);
         setIsActiveLevels(activeLevels);
+  
+        // Now, let's compare each level's partners to direct partners
+        const { data: directPartnersData } = await client.query({
+          query: GET_REGISTRATIONS,
+          variables: { referrer: "0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
+        });
+  
+        const directPartners = directPartnersData.registrations.map(
+          (registration: { user: string }) => registration.user
+        );
+        console.log("Direct Partners:", directPartners);
+  
+        // Check each level's partners against direct partners
+        const actualPartnersPerLevel = partnerCounts.map((_, index) => {
+          const levelPartners = partnersResponse[index].data.newUserPlaces.map(
+            (partner: { user: string }) => partner.user
+          );
+            const uniqueLevelPartners = Array.from(new Set(levelPartners)) as string[];
+            const matchingPartners: string[] = uniqueLevelPartners.filter((partner: string) =>
+              directPartners.includes(partner)
+            );
+            console.log(`Level ${index + 1} Actual Partners:`, matchingPartners.length);
+            return matchingPartners.length;
+          });
+          
+        setActualPartnersPerLevel(actualPartnersPerLevel);
+  
       } catch (error) {
         console.error("Error fetching level data:", error);
       }
     };
-
+  
     fetchLevelData();
   }, [staticAddress]);
+  
 
   const nextLevel = () => {
     setCurrentLevel((prev) => (prev < levelDataX4.length ? prev + 1 : prev));
@@ -179,25 +207,12 @@ const LevelSliderx4: React.FC = () => {
 
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
-                  <span className="mr-2">👥</span> {partnersData[currentLevel - 1]}
+                    <span className="mr-2">👥</span> {actualPartnersPerLevel[currentLevel - 1]}
                 </div>
                 <div className="flex items-center">
                   <span className="mr-2">🔄</span> {cyclesData[currentLevel - 1]}
                 </div>
               </div>
-              <div className="flex justify-center items-center">
-                <span className="mr-2">💰</span>
-                {partnersData[currentLevel - 1] * levelDataX4[currentLevel - 1]?.cost} BUSD
-              </div>
-            </div>
-
-            {/* Activate/Deactivate Level Button */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              {!isActiveLevels[currentLevel - 1] &&
-             <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
-             <button className="px-6 py-2 rounded text-xl">Inactive</button>
-         </div>
-             }
             </div>
           </div>
         </div>
@@ -209,9 +224,12 @@ const LevelSliderx4: React.FC = () => {
           {currentLevel < levelDataX4.length ? currentLevel + 1 : ""}
         </button>
       </div>
+
+      {/* NotifyBot Component */}
       <NotifyBot />
+      {/* Level Transaction History */}
       <LevelTransection matrix={2} currentLevel={currentLevel} />
-      </Suspense>
+    </Suspense>
   );
 };
 
