@@ -1,7 +1,6 @@
 'use client'; // Ensure client-side rendering
 
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { useWallet } from '@/app/context/WalletContext';
 import LevelHeader from '@/components/levelheader/x3levelheader/x3levelheader';
 import NotifyBot from '@/components/notifybot/notifybot';
@@ -28,6 +27,12 @@ const levels = [
   { level: 12, cost: 0.2048 },
 ];
 
+const fetchProfitData = async (referrer: string, level: number) => {
+  const response = await fetch(`/api/userProfit?referrer=${referrer}&level=${level}`);
+  const data = await response.json();
+  return data.levelProfit;
+};
+
 const LevelSliderx3: React.FC = () => {
   const walletAddress = useWallet();
   const [currentLevel, setCurrentLevel] = useState(1);
@@ -41,6 +46,8 @@ const LevelSliderx3: React.FC = () => {
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
   const [uplineId, setUplineId] = useState<string | null>(null);
   const [actualPartnersPerLevel, setActualPartnersPerLevel] = useState<number[]>([]);
+  const [cycleWalletAddresses, setCycleWalletAddresses] = useState<string[][][]>(new Array(12).fill([]));
+  const [levelProfits, setLevelProfits] = useState<number[]>(new Array(12).fill(0));
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -148,20 +155,34 @@ const LevelSliderx3: React.FC = () => {
         const remainder = partnerCount % 3;
 
         // Log wallet addresses involved in the cycle way
-        if (fullCycles > 0) {
-          const levelPartners = partnersResponse[index].data.newUserPlaces.map(
-            (partner: { user: string }) => partner.user
-          );
-          console.log(`Level ${index + 1} Cycle Wallet Addresses:`, levelPartners);
+        const levelPartners = partnersResponse[index].data.newUserPlaces.map(
+          (partner: { user: string }) => partner.user
+        );
+        console.log(`Level ${index + 1} Cycle Wallet Addresses:`, levelPartners);
+
+        // Group users into cycles
+        const cycles = [];
+        for (let i = 0; i < levelPartners.length; i += 3) {
+          const cycle = levelPartners.slice(i, i + 3);
+          cycles.push(cycle);
         }
 
-        return { fullCycles, remainder };
+        // Log the cycles
+        cycles.forEach((cycle, cycleIndex) => {
+          console.log(`Cycle ${cycleIndex + 1}`);
+            cycle.forEach((partner: string, partnerIndex: number) => {
+            console.log(`User ${partnerIndex + 1} Wallet Address: ${partner}`);
+            });
+        });
+
+        return { fullCycles, remainder, cycles };
       });
 
       setCyclesData(cycleData.map((data) => data.fullCycles));
       setReminderData(cycleData.map((data) => data.remainder));
       setPartnerCounts(partnerCountsArray);
       setActiveLevels(activeLevelsArray);
+      setCycleWalletAddresses(cycleData.map((data) => data.cycles));
 
       // Now, let's compare each level's partners to direct partners
       const { data: directPartnersData } = await client.query({
@@ -193,6 +214,22 @@ const LevelSliderx3: React.FC = () => {
     fetchData();
   }, [staticAddress]);
 
+  useEffect(() => {
+    const fetchLevelProfits = async () => {
+      const profits = await Promise.all(
+        levels.map(async (level) => {
+          const profit = await fetchProfitData('0xD733B8fDcFaFf240c602203D574c05De12ae358C',level.level);
+          return profit;
+        })
+      );
+
+      setLevelProfits(profits);
+      setTotalRevenue(profits.reduce((acc, profit) => acc + profit, 0));
+    };
+
+    fetchLevelProfits();
+  }, []);
+
   const handleLevelChange = (direction: 'prev' | 'next') => {
     setCurrentLevel((prevLevel) =>
       direction === 'prev' ? Math.max(prevLevel - 1, 1) : Math.min(prevLevel + 1, 12)
@@ -207,8 +244,9 @@ const LevelSliderx3: React.FC = () => {
         {/* Previous Level Button */}
         <button
           onClick={() => handleLevelChange('prev')}
-          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${currentLevel === 1 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
-            }`}
+          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${
+            currentLevel === 1 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
+          }`}
           disabled={currentLevel === 1}
         >
           {currentLevel > 1 ? currentLevel - 1 : ''}
@@ -216,67 +254,76 @@ const LevelSliderx3: React.FC = () => {
 
         {/* Level Card */}
         <div className="flex-grow mx-4 relative">
-          {levels && (
+            {levels && (
             <div className="bg-blue-700 rounded-lg text-center border border-gray-600 relative">
               <div className="p-9">
-                <div className="flex justify-between items-center mb-6">
-                  <div className="text-xl font-bold">Lvl {currentLevel}</div>
-                  <div className="text-xl font-bold">ID: {userId || 'Loading...'}</div>
-                  <div className="text-lg">{levels[currentLevel - 1].cost} BUSD</div>
-                </div>
+              <div className="flex justify-between items-center mb-6">
+                <div className="text-xl font-bold">Lvl {currentLevel}</div>
+                <div className="text-xl font-bold">ID: {userId || 'Loading...'}</div>
+                <div className="text-lg">{levels[currentLevel - 1].cost} BUSD</div>
+              </div>
 
-                {/* Partner Indicators */}
-                <div className="flex justify-center items-center mb-6 gap-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div
-                        className={`relative w-24 h-24 rounded-full ${activeLevels[currentLevel - 1] && i < reminderData[currentLevel - 1]
-                            ? 'bg-blue-600'
-                            : 'bg-gray-400'
-                          }`}
-                      >
-                        {i < partnerCounts[currentLevel - 1] && (
-                          <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
-                            {i + 1}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Level Stats */}
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center">
-                    <span className="mr-2">👥</span> {actualPartnersPerLevel[currentLevel - 1]}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="mr-2">🔄</span> {cyclesData[currentLevel - 1]}
+              {/* Partner Indicators */}
+              <div className="flex justify-center items-center mb-6 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <div
+                  className={`relative w-24 h-24 rounded-full ${activeLevels[currentLevel - 1] && i < reminderData[currentLevel - 1]
+                    ? 'bg-blue-600'
+                    : 'bg-gray-400'
+                    }`}
+                  >
+                  {i < partnerCounts[currentLevel - 1] && (
+                    <span className="absolute inset-0 flex justify-center items-center text-sm text-white">
+                    {i + 1}
+                    </span>
+                  )}
                   </div>
                 </div>
+                ))}
+              </div>
 
-                {/* Total Revenue */}
-                <div className="flex justify-center items-center">
-                  <span className="mr-2">💰</span>
-                  {totalRevenue} BUSD
+              {/* Level Stats */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center">
+                <span className="mr-2">👥</span> {actualPartnersPerLevel[currentLevel - 1]}
                 </div>
+                <div className="flex items-center">
+                <span className="mr-2">🔄</span> {cyclesData[currentLevel - 1]} 
+                </div>
+              </div>
+
+              {/* Total Revenue */}
+              <div className="flex justify-center items-center">
+                <span className="mr-2">💰</span>
+                {totalRevenue.toFixed(4)} BUSD
+              </div>
+
+              {/* Current Level Profit */}
+              <div className="mt-4">
+                <div className="flex justify-between items-center">
+                <span>Level {currentLevel} Profit:</span>
+                <span>{levelProfits[currentLevel - 1].toFixed(4)} BUSD</span>
+                </div>
+              </div>
               </div>
 
               {/* Inactive Overlay */}
               {!activeLevels[currentLevel - 1] && (
-                <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
-                  <button className="px-6 py-2 rounded text-xl">Inactive</button>
-                </div>
+              <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
+                <button className="px-6 py-2 rounded text-xl">Inactive</button>
+              </div>
               )}
             </div>
-          )}
+            )}
         </div>
 
         {/* Next Level Button */}
         <button
           onClick={() => handleLevelChange('next')}
-          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${currentLevel === 12 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
-            }`}
+          className={`p-4 rounded-3xl h-20 lg:h-24 transition-all duration-200 ease-in-out ${
+            currentLevel === 12 ? 'bg-gray-600 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'
+          }`}
           disabled={currentLevel === 12}
         >
           {currentLevel < 12 ? currentLevel + 1 : ''}
