@@ -218,7 +218,7 @@ const LevelSliderx3: React.FC = () => {
     const fetchLevelProfits = async () => {
       const profits = await Promise.all(
         levels.map(async (level) => {
-          const profit = await fetchProfitData('0xD733B8fDcFaFf240c602203D574c05De12ae358C',level.level);
+          const profit = await fetchProfitData(staticAddress || '',level.level);
           return profit;
         })
       );

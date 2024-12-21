@@ -17,19 +17,6 @@ const levels = [
     { level: 12, cost: 0.2048 },
 ];
 
-
-export const x3ActiveLevel = gql`
-  query x3ActiveLevel($user: String!) {
-    upgrades(
-      where: { user: $user, matrix: 1 }
-      orderBy: user
-      orderDirection: desc
-    ) {
-      level
-    }
-  }
-`;
-
 const fetchGraphQLData = async (level: number, referrer: string) => {
     const query = gql`
         query($level: Int!, $referrer: String!) {
@@ -41,7 +28,6 @@ const fetchGraphQLData = async (level: number, referrer: string) => {
                 user
                 place
             }
-
             sentExtraEthDividends_collection(
                 where: { receiver: $referrer, matrix: 1, level: $level }
             ) {
@@ -49,6 +35,13 @@ const fetchGraphQLData = async (level: number, referrer: string) => {
                 receiver
                 level
                 matrix
+            }
+            upgrades(
+                where: { user: $referrer, matrix: 1 }
+                orderBy: user
+                orderDirection: desc
+            ) {
+                level
             }
         }
     `;
@@ -60,6 +53,9 @@ const fetchGraphQLData = async (level: number, referrer: string) => {
     return data;
 };
 
+const isActiveLevel = (level: number, upgrades: { level: number }[]): boolean => {
+    return upgrades.some((upgrade) => upgrade.level === level);
+};
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
     const { level, referrer } = req.query;
@@ -79,44 +75,42 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     try {
         const data = await fetchGraphQLData(levelNumber, referrer as string);
+        const newUserPlaces = data.newUserPlaces || [];
+        const sentExtraEthDividends = data.sentExtraEthDividends_collection || [];
+        const upgrades = data.upgrades || [];
 
-        const newUserPlaces = data.newUserPlaces;
-        const sentExtraEthDividends = data.sentExtraEthDividends_collection;
+        let totalProfit = 0;
+        let extraUsersCount = 0;
 
-        // Calculate profit from sentExtraEthDividends
+        // Always count level 1 as active
+        if (levelNumber === 1) {
+            const cycles = Math.floor(newUserPlaces.length / 3);
+            totalProfit += cycles * levels[levelNumber - 1].cost * 2;
+            extraUsersCount = newUserPlaces.length % 3;
+        } else {
+            const prevLevelActive = isActiveLevel(levelNumber - 1, upgrades);
+            const currentLevelActive = isActiveLevel(levelNumber, upgrades);
+
+            if (currentLevelActive) {
+                const cycles = Math.floor(newUserPlaces.length / 3);
+                totalProfit += cycles * levels[levelNumber - 1].cost * 2;
+                extraUsersCount = newUserPlaces.length % 3;
+            } else if (prevLevelActive) {
+                const usersToCount = Math.min(newUserPlaces.length, 2);
+                totalProfit += usersToCount * levels[levelNumber - 2].cost;
+                extraUsersCount = newUserPlaces.length - usersToCount;
+            }
+        }
+
+        // Calculate profit from extra ETH dividends
         let extraDividendsProfit = 0;
         if (sentExtraEthDividends.length > 0) {
             extraDividendsProfit = sentExtraEthDividends.length * levels[levelNumber - 1].cost;
         }
 
-        const cycles = Math.floor(newUserPlaces.length / 3);
-        let levelProfit = 0;
+        totalProfit += extraDividendsProfit;
 
-        for (let i = 0; i < cycles; i++) {
-            levelProfit += levels[levelNumber - 1].cost * 2;
-        }
-
-        // Add extraDividendsProfit to levelProfit
-        levelProfit += extraDividendsProfit;
-
-        const extraUsers: string[] = newUserPlaces.slice(cycles * 3).map((place: NewUserPlace) => place.user);
-        if (extraUsers.length > 0) {
-            levelProfit += extraUsers.length * levels[levelNumber - 1].cost;
-        }
-
-        interface NewUserPlace {
-            user: string;
-            place: number;
-        }
-
-        interface SentExtraEthDividend {
-            from: string;
-            receiver: string;
-            level: number;
-            matrix: number;
-        }
-
-        res.status(200).json({ levelProfit });
+        res.status(200).json({ levelProfit: totalProfit, extraUsers: extraUsersCount });
     } catch (error) {
         console.error('Error fetching data:', error);
         res.status(500).json({ error: 'Internal server error' });

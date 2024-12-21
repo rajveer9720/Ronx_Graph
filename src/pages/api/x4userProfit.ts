@@ -19,13 +19,7 @@ const levels = [
 
 export const x4ActiveLevel = gql`
   query x4ActiveLevel($user: String!) {
-    upgrades(
-      where: { user: $user, matrix: 2 }
-      orderBy: user
-      orderDirection: desc
-    ) {
-      level
-    }
+ 
   }
 `;
 
@@ -49,6 +43,13 @@ const fetchGraphQLData = async (level: number, referrer: string) => {
                 level
                 matrix
             }
+                   upgrades(
+      where: { user: $referrer, matrix: 2 }
+      orderBy: user
+      orderDirection: desc
+    ) {
+      level
+    }
         }
     `;
 
