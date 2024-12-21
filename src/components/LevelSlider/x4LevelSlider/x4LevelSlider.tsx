@@ -30,6 +30,12 @@ const levelDataX4 = [
   { level: 12, cost: 0.2048 },
 ];
 
+const fetchProfitData = async (referrer: string, level: number) => {
+  const response = await fetch(`/api/x4userProfit?referrer=${referrer}&level=${level}`);
+  const data = await response.json();
+  return data.levelProfit;
+};
+
 const LevelSliderx4: React.FC = () => {
   const walletAddress = useWallet();
   const [currentLevel, setCurrentLevel] = useState<number>(1);
@@ -42,6 +48,8 @@ const LevelSliderx4: React.FC = () => {
   const [uplineId, setUplineId] = useState<number | null>(null);
   const staticAddress = walletAddress ? walletAddress.walletAddress : null;
   const [actualPartnersPerLevel, setActualPartnersPerLevel] = useState<number[]>([]);
+  const [levelProfits, setLevelProfits] = useState<number[]>(new Array(12).fill(0));
+  const [totalRevenue, setTotalRevenue] = useState<number>(0);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -93,7 +101,7 @@ const LevelSliderx4: React.FC = () => {
         // Fetch active levels
         const activeLevelsResponse = await client.query({
           query: getUserPlacesQuery,
-          variables: { walletAddress: "0xD733B8fDcFaFf240c602203D574c05De12ae358C" },
+          variables: { walletAddress: staticAddress },
         });
   
         const activeLevels = Array(12).fill(false);
@@ -167,6 +175,23 @@ const LevelSliderx4: React.FC = () => {
     fetchLevelData();
   }, [staticAddress]);
   
+    useEffect(() => {
+      const fetchLevelProfits = async () => {
+      const profits = await Promise.all(
+        levelDataX4.map(async (level) => {
+        const profit = await fetchProfitData(staticAddress || '', level.level);
+        console.log(`#1Level ${level.level} Profit:`, profit); // Log each level's profit
+        return profit;
+        })
+      );
+    
+      const validProfits = profits.map(profit => isNaN(profit) ? 0 : profit);
+      setLevelProfits(validProfits);
+      setTotalRevenue(validProfits.reduce((acc, profit) => acc + profit, 0));
+      };
+    
+      fetchLevelProfits();
+    }, []);
 
   const nextLevel = () => {
     setCurrentLevel((prev) => (prev < levelDataX4.length ? prev + 1 : prev));
@@ -237,7 +262,27 @@ const LevelSliderx4: React.FC = () => {
                   <span className="mr-2">🔄</span> {cyclesData[currentLevel - 1]}
                 </div>
               </div>
+              
             </div>
+               <div className="flex justify-center items-center">
+                <span className="mr-2">💰</span>
+                {totalRevenue} BUSD
+              </div>
+
+              {/* Current Level Profit */}
+              <div className="mt-4">
+                <div className="flex justify-between items-center">
+                <span>Level {currentLevel} Profit:</span>
+                <span>{levelProfits[currentLevel - 1] !== undefined ? levelProfits[currentLevel - 1].toFixed(4) : '0.0000'} BUSD</span>
+                </div>
+              </div>
+                
+              {!isActiveLevels[currentLevel - 1] && (
+              <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg font-bold">
+                <button className="px-6 py-2 rounded text-xl">Inactive</button>
+              </div>
+              )}
+
           </div>
         </div>
         <button

@@ -28,7 +28,7 @@ const levels = [
 ];
 
 const fetchProfitData = async (referrer: string, level: number) => {
-  const response = await fetch(`/api/userProfit?referrer=${referrer}&level=${level}`);
+  const response = await fetch(`/api/x3userProfit?referrer=${referrer}&level=${level}`);
   const data = await response.json();
   return data.levelProfit;
 };
